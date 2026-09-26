@@ -10,7 +10,7 @@ Views resolve as `themes.<theme>.<view>` and fall back to the `default` theme on
 php artisan vendor:publish --tag=laranail::artisan-ui-views
 ```
 
-That writes `resources/views/vendor/laranail/artisan-ui/themes/default/…`. Copy the views you want to change into a sibling directory named for your theme, delete the published `default` copies you did not change (a published default view overrides the package's, and stops receiving upgrades), and select the theme:
+That writes `resources/views/vendor/laranail/artisan-ui/themes/default/...`. Copy the views you want to change into a sibling directory named for your theme, delete the published `default` copies you did not change (a published default view overrides the package's, and stops receiving upgrades), and select the theme:
 
 ```text
 resources/views/vendor/laranail/artisan-ui/themes/acme/

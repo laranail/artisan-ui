@@ -41,7 +41,7 @@ Two partials, `partials.field` (one argument or option) and `partials.risk-badge
 | Definition | Control | Sent as |
 |---|---|---|
 | Argument, or option taking a value | text input | `arguments[name]` / `options[name]` |
-| List argument or option (`=*`) | one text input per value, with Add and Remove | `…[name][]` |
+| List argument or option (`=*`) | one text input per value, with Add and Remove | `...[name][]` |
 | Option whose value is optional | text input, plus "Send `--name` without a value" | the typed value, or `true` when only the box is ticked |
 | Flag (`--force`) | checkbox | `options[name]=1` |
 | Negatable flag (`--ansi` / `--no-ansi`) | three-way select: Not set, `--name`, `--no-name` | `1` or `no` (becomes `--no-name`) |
@@ -79,7 +79,7 @@ The theme name must be a lowercase slug; anything else falls back to `default`, 
 
 Dark mode follows the operator's saved choice (stored in `localStorage` under `laranail-artisan-ui:theme`), otherwise the system preference, by toggling a `dark` class on `<html>`. A browser that refuses storage just forgets the choice.
 
-Command output colours come from a fixed set of `lau-*` classes in `resources/css/artisan-ui.css` (`lau-fg-red`, `lau-bg-bright-black`, `lau-bold`, …). A theme can restyle them in its own stylesheet, served from the application's origin.
+Command output colours come from a fixed set of `lau-*` classes in `resources/css/artisan-ui.css` (`lau-fg-red`, `lau-bg-bright-black`, `lau-bold`, ...). A theme can restyle them in its own stylesheet, served from the application's origin.
 
 ## The client
 

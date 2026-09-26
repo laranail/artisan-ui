@@ -77,8 +77,8 @@ Text a command prints with `echo`, `print` or `var_dump` is captured into the sa
 | Handled | Result |
 |---|---|
 | SGR bold, dim, italic, underline and their resets | `lau-bold`, `lau-dim`, `lau-italic`, `lau-underline` |
-| the 8 foreground colours and their bright variants | `lau-fg-red`, `lau-fg-bright-cyan`, … |
-| the 8 background colours and their bright variants | `lau-bg-yellow`, `lau-bg-bright-black`, … |
+| the 8 foreground colours and their bright variants | `lau-fg-red`, `lau-fg-bright-cyan`, ... |
+| the 8 background colours and their bright variants | `lau-bg-yellow`, `lau-bg-bright-black`, ... |
 | 256-colour and truecolour parameters | consumed and ignored |
 | OSC sequences (hyperlinks, titles), cursor movement, erase line, lone escapes | removed |
 | carriage-return progress redraws | only the final state of each line kept |

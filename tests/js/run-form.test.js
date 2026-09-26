@@ -9,7 +9,7 @@ const page = () => `
       <input id="f-name" name="arguments[name]" value="users" aria-describedby="f-name-error">
       <p id="f-name-error" data-lau-error-for="arguments.name" hidden></p>
       <p data-lau-error-for="confirm" hidden></p>
-      <button type="submit" data-lau-run-button><span data-lau-run-label>Run</span><span data-lau-running-label hidden>…</span></button>
+      <button type="submit" data-lau-run-button><span data-lau-run-label>Run</span><span data-lau-running-label hidden>...</span></button>
       <p data-lau-status></p>
     </form>
     <section data-lau-output-panel hidden><pre data-lau-output></pre><p data-lau-truncated hidden></p></section>

@@ -206,9 +206,9 @@ return [
     'presets' => [
         'enabled' => true,
 
-        // Extra groups: key => ['label' => '…', 'actions' => [[
-        //     'label' => '…', 'command' => '…',
-        //     'arguments' => [], 'options' => [], 'description' => '…',
+        // Extra groups: key => ['label' => '...', 'actions' => [[
+        //     'label' => '...', 'command' => '...',
+        //     'arguments' => [], 'options' => [], 'description' => '...',
         // ]]]
         'groups' => [],
     ],

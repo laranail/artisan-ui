@@ -111,8 +111,8 @@ A destructive command needs both:
 
 | Limiter | Applies to | Limit |
 |---|---|---|
-| `laranail-artisan-ui` | `POST …/commands/{command}/run` | `rate_limit.per_minute` (default 30) per user |
-| `laranail-artisan-ui-confirm` | `POST …/confirm-password` | 5 per minute per user |
+| `laranail-artisan-ui` | `POST .../commands/{command}/run` | `rate_limit.per_minute` (default 30) per user |
+| `laranail-artisan-ui-confirm` | `POST .../confirm-password` | 5 per minute per user |
 
 ## Locking
 

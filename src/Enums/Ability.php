@@ -13,8 +13,8 @@ use Simtabi\Laranail\Enumerator\Concerns\HasEnumeratorBehavior;
 /**
  * The Gate abilities the package asks about.
  *
- * Each value is the ability name as registered, so `Gate::define(Ability::Access->value, …)`
- * and `Gate::define('laranail-artisan-ui.access', …)` are the same thing. The package defines
+ * Each value is the ability name as registered, so `Gate::define(Ability::Access->value, ...)`
+ * and `Gate::define('laranail-artisan-ui.access', ...)` are the same thing. The package defines
  * every one of them as a deny-all fallback, and only when the application has not defined it
  * first, so an application definition always wins.
  */

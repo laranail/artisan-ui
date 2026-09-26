@@ -29,7 +29,7 @@ it('defines every messages key used in src and the views', function (): void {
         }
     }
 
-    // Dynamic prefixes (`messages.validation.' . $key`, `messages.denied.' . …`) are checked
+    // Dynamic prefixes (`messages.validation.' . $key`, `messages.denied.' . ...`) are checked
     // through their parent array.
     expect(count($keys))->toBeGreaterThan(20);
 

@@ -10,12 +10,12 @@ Before anything runs, `Simtabi\Laranail\ArtisanUI\Core\Validation\InputValidator
 |---|---|
 | `arguments` and `options` must be objects keyed by name, not lists | `The arguments must be an object keyed by name.` |
 | every key must be one the command defines | `The command has no argument named [x].` |
-| global options (`--env`, `--verbose`, …) are refused, with or without dashes | `The global [--env] option cannot be set from the panel.` |
+| global options (`--env`, `--verbose`, ...) are refused, with or without dashes | `The global [--env] option cannot be set from the panel.` |
 | required arguments must be present | `The [name] argument is required.` |
 | a flag takes no value: `true`, `1`, `'1'`, `'true'`, `'on'`, `'yes'` set it; `false`, `0`, `'0'`, `'false'`, `'off'`, `'no'`, `''`, `null` leave it off | `The [--force] option is a flag and takes no value.` |
 | values must be text (strings or numbers) | `The [x] field must be text.` |
-| each value is at most `limits.max_value_length` characters | `… is longer than 1000 characters.` |
-| a list holds at most `limits.max_array_items` values | `… takes at most 50 values.` |
+| each value is at most `limits.max_value_length` characters | `... is longer than 1000 characters.` |
+| a list holds at most `limits.max_array_items` values | `... takes at most 50 values.` |
 
 Values are trimmed and empty ones dropped; a lone string is accepted for a list field; a value-optional option ticked without a value is passed as present with no value.
 

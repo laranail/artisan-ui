@@ -22,7 +22,7 @@ All four live in `Simtabi\Laranail\ArtisanUI\Core\Events` and are dispatched thr
 | `runId` | The ULID shared with the audit record and the response. |
 | `command` | The `CommandDefinition`. |
 | `input` | The `ValidatedInput`, **unredacted**. |
-| `redactedInput` | `['arguments' => …, 'options' => …]` with secret-named keys masked. Use this for anything you store or send. |
+| `redactedInput` | `['arguments' => ..., 'options' => ...]` with secret-named keys masked. Use this for anything you store or send. |
 | `risk` | The `CommandRisk`. |
 | `actor`, `actorId()`, `actorType()` | The signed-in user, its identifier as a string, its class. |
 | `ip` | The client address. |
@@ -73,7 +73,7 @@ Every event is a bubbling DOM `CustomEvent` named `laranail-artisan-ui:<name>`, 
 | `laranail-artisan-ui:run:failed` | the command form | the run response body, when the command failed or errored | no |
 | `laranail-artisan-ui:run:refused` | the command form | `{ status, body }` for `422`, `423`, `419`, `409`, `403`, `404`, `0` (network) and anything else | no |
 
-`body` in `run:before` is `{ arguments: {…}, options: {…}, confirm? }`. An aborted request (the page tearing down) dispatches nothing.
+`body` in `run:before` is `{ arguments: {...}, options: {...}, confirm? }`. An aborted request (the page tearing down) dispatches nothing.
 
 ```js
 document.addEventListener('laranail-artisan-ui:run:finished', (event) => {

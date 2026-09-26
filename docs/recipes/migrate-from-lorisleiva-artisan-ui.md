@@ -28,7 +28,7 @@ Delete the old published files: `config/artisan-ui.php`, `public/vendor/artisan-
 | always on | `enabled` = `false`; set `LARANAIL_ARTISAN_UI_ENABLED=true` |
 | `local` by default through the auth callback | `environments` = `['local']`, checked **in addition** to the Gate |
 | `php artisan artisan-ui:install` | `php artisan laranail::artisan-ui.install` |
-| `Lorisleiva\ArtisanUI\…` | `Simtabi\Laranail\ArtisanUI\…`; facade `Simtabi\Laranail\ArtisanUI\Facades\ArtisanUI`, with no global alias |
+| `Lorisleiva\ArtisanUI\...` | `Simtabi\Laranail\ArtisanUI\...`; facade `Simtabi\Laranail\ArtisanUI\Facades\ArtisanUI`, with no global alias |
 
 ## Replace `ArtisanUI::auth()`
 
@@ -63,11 +63,11 @@ There is no "anyone in local" mode: a user must be signed in, and the environmen
 ## What is now refused by default
 
 - Everyone, until the `access` and `run` abilities are defined.
-- Long-running and interactive commands (`serve`, `tinker`, `queue:work`, `horizon`, …) and `config:show`: never listed, `404`.
+- Long-running and interactive commands (`serve`, `tinker`, `queue:work`, `horizon`, ...) and `config:show`: never listed, `404`.
 - Hidden commands, unless `commands.include_hidden` is true.
 - Global options such as `--env` and `--verbose`, and any key the command does not define: `422`.
-- Writes-files commands (`make:*`, `vendor:publish`, …) outside `local`: `403`.
-- Destructive commands (`migrate*`, `db:wipe`, `db:seed`, `key:generate`, `down`, …) without the command name typed back and a fresh password confirmation.
+- Writes-files commands (`make:*`, `vendor:publish`, ...) outside `local`: `403`.
+- Destructive commands (`migrate*`, `db:wipe`, `db:seed`, `key:generate`, `down`, ...) without the command name typed back and a fresh password confirmation.
 - A second run of a command that is still running: `409`.
 - Prompts: every run is non-interactive, so a command that asks a question gets its default answer.
 

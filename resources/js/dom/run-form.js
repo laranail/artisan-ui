@@ -331,12 +331,12 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
 }
 
 const DEFAULT_MESSAGES = {
-  running: 'Running…',
+  running: 'Running...',
   exit_code: 'Exit code :code',
   duration: ':ms ms',
   invalid_input: 'Check the highlighted fields.',
   session_expired: 'Your session was refreshed. Run the command again.',
-  session_expired_pending: 'Your session expired. Refreshing it…',
+  session_expired_pending: 'Your session expired. Refreshing it...',
   session_lost: 'Your session expired and could not be refreshed. Reload the page.',
   password_required: 'Confirm your password to run this command.',
   cancelled: 'Cancelled. Nothing was run.',

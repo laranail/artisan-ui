@@ -16,7 +16,7 @@ use Simtabi\Laranail\ArtisanUI\Core\Validation\ValidatedInput;
  * Three passes over output, cheapest first:
  *
  *  1. the literal value of every environment variable whose name looks secret
- *     (`DB_PASSWORD`, `APP_KEY`, `STRIPE_SECRET` …), wherever it appears;
+ *     (`DB_PASSWORD`, `APP_KEY`, `STRIPE_SECRET` ...), wherever it appears;
  *  2. `NAME=value` lines whose name looks secret, which is what `env`-style dumps print;
  *  3. the password part of `scheme://user:password@host` URLs.
  *
@@ -206,7 +206,7 @@ final class SecretRedactor
 
         // The loaded configuration too: under `config:cache` the .env file is never read into
         // the environment, so in production the secrets live only in config (app.key,
-        // database.connections.*.password, services.*.secret …). A config key is judged by
+        // database.connections.*.password, services.*.secret ...). A config key is judged by
         // its last segment.
         foreach (Arr::dot($this->appConfig?->all() ?? []) as $key => $value) {
             if ($this->isConfigSecret((string) $key, $value)) {

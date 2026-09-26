@@ -69,9 +69,9 @@ Every failure is classified, and the classification decides what the operator se
 | The audit store fails (table missing, write error) | Degradable | Through package-tools `FailurePolicy::handle(..., BootCriticality::Degradable)`: reported, recorded in `BootReport` as `laranail/artisan-ui:audit.database`, surfaced by `boot:health`. The run is still recorded, in the log. |
 | An output decorator throws | Degradable, fail closed | The output is withheld rather than shown undecorated, because a decorator may exist to hide something. Reported and recorded in `BootReport` as `laranail/artisan-ui:output.decorate`. |
 | Output exceeded the cap | Tolerated anomaly | Truncated, flagged in the response, logged at warning (`tolerated anomaly [laranail/artisan-ui:run.output]`). |
-| The cache store cannot lock | Tolerated anomaly | The run proceeds unlocked, logged at warning (`…run.lock`). Doctor warns. |
-| The run row vanished before the finish (after `migrate:fresh`) | Tolerated anomaly | Logged at warning (`…audit.database`); the start and finish are written to the log instead. |
-| Password confirmation missing or expired | Tolerated anomaly | `423` to the client; logged at warning (`…confirm.password`). |
+| The cache store cannot lock | Tolerated anomaly | The run proceeds unlocked, logged at warning (`...run.lock`). Doctor warns. |
+| The run row vanished before the finish (after `migrate:fresh`) | Tolerated anomaly | Logged at warning (`...audit.database`); the start and finish are written to the log instead. |
+| Password confirmation missing or expired | Tolerated anomaly | `423` to the client; logged at warning (`...confirm.password`). |
 | The log channel itself fails | Logging substrate | Falls back to PHP's `error_log()`; it cannot report through itself. |
 | Reporting itself fails | Guarded | `error_log()` last resort; a broken monitoring integration never turns a handled failure into a crash. |
 
@@ -87,7 +87,7 @@ Every application already has a way to sign users in, and a second one would be 
 
 ## Why Gate abilities instead of an auth callback?
 
-Upstream's `ArtisanUI::auth(fn ($request) => …)` answered one question, once per request, about the request. That is too coarse for a tool that can drop a database. Gate abilities answer per user **and** per command: `run` receives the `CommandDefinition` and the validated input, so an application can let support staff clear caches while only admins migrate. They also compose with everything the application already has (policies, `Gate::before`, roles packages), and they are testable with the framework's own tools. The package defines each ability as deny-all only when the application has not defined it (`Gate::has()` first), so an application definition always wins regardless of provider order.
+Upstream's `ArtisanUI::auth(fn ($request) => ...)` answered one question, once per request, about the request. That is too coarse for a tool that can drop a database. Gate abilities answer per user **and** per command: `run` receives the `CommandDefinition` and the validated input, so an application can let support staff clear caches while only admins migrate. They also compose with everything the application already has (policies, `Gate::before`, roles packages), and they are testable with the framework's own tools. The package defines each ability as deny-all only when the application has not defined it (`Gate::has()` first), so an application definition always wins regardless of provider order.
 
 ## Why framework-free JavaScript, and no Alpine?
 
@@ -106,7 +106,7 @@ Command output can contain anything, including markup a command echoes from user
 | lorisleiva #1 | PHP 8 requirement question | No change needed; the floor is now `^8.4.1 \|\| ^8.5`. |
 | lorisleiva #2 (merged) | Open the arguments panel when a command has required arguments | Kept, with its bug fixed: upstream rendered `{ open:  }` for false, which is invalid JavaScript. A regression test covers it. |
 | lorisleiva #3 | Remember the open group in the URL | Implemented: the open group is mirrored into `#group-<namespace>`. |
-| lorisleiva #6, #7, #10 | Laravel 9, 10 and 11–13 support | Superseded by the Laravel 13 rewrite. Kept: #7's horizontally scrolling output, and #10's non-interactive runs, as `--no-interaction` on every call. |
+| lorisleiva #6, #7, #10 | Laravel 9, 10 and 11 to 13 support | Superseded by the Laravel 13 rewrite. Kept: #7's horizontally scrolling output, and #10's non-interactive runs, as `--no-interaction` on every call. |
 | lorisleiva #9 | Allow and deny lists | Reimplemented in `CommandPolicy` with `Str::is()`, fixing its `str_starts_with` matching so `migrate:*` also covers `migrate`. Its unused `switch_size` key was dropped. |
 | pabloleone branch `pabloleone-patch-1` | Unmerged before/after execute events | Ported as `CommandExecuting`, `CommandExecuted` and `CommandFailed`. |
 | pabloleone #2 | Running a command twice sends invalid arguments | Covered by a rerun regression test; execution goes through the console kernel with fresh input every time. |

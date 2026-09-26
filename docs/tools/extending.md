@@ -85,7 +85,7 @@ The recorder is chosen from `audit.driver` with a closed `match` (`log`, `databa
 | Method | Does |
 |---|---|
 | `respondWith(string $command, RunResult\|Closure\|string $response)` | Canned response for one command. A string is successful output; a closure receives `(CommandDefinition, ValidatedInput)` and returns a `RunResult`. Returns the fake. |
-| `runs()` | Every recorded run: `['command' => …, 'input' => ['arguments' => …, 'options' => …]]`. |
+| `runs()` | Every recorded run: `['command' => ..., 'input' => ['arguments' => ..., 'options' => ...]]`. |
 | `assertRan(string $command, ?Closure $matching = null)` | At least one run of the command, optionally with input the closure accepts. |
 | `assertNotRan(string $command)` | No run of the command. |
 | `assertNothingRan()` | No run at all. |

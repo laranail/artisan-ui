@@ -70,7 +70,7 @@ describe('UI review regressions', () => {
     expect(calls).toEqual(['/run', '/confirm', '/run'])
   })
 
-  it('leaves no "Running…" behind on 423 and after the dialog closes (#3)', async () => {
+  it('leaves no "Running..." behind on 423 and after the dialog closes (#3)', async () => {
     page()
     const dialog = document.querySelector('dialog')
     dialog.showModal = () => dialog.setAttribute('open', '')
