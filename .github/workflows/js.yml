@@ -1,0 +1,52 @@
+name: Browser runtime
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: js-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  runtime:
+    name: Vitest · bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      # Not `npm ci`: it requires a lockfile, and laranail packages do not
+      # track one. The bundle-drift check below is what guards the result.
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Syntax-check every module
+        run: find resources/js -name '*.js' -exec node --check {} \;
+
+      - name: Lint and format check
+        run: npm run lint
+
+      - name: Run the test suite
+        run: npm test
+
+      - name: Rebuild the bundle
+        run: npm run build
+
+      # resources/dist is committed, because consumers install through Composer
+      # and never run npm. A drift here is a panel that ships stale behaviour.
+      - name: Verify the committed bundle is up to date
+        run: git diff --exit-code resources/dist
+
+      # The banner is how a copy of the bundle found elsewhere names its source.
+      - name: Verify the licence banner survived minification
+        run: grep -q "laranail/artisan-ui" resources/dist/artisan-ui.js

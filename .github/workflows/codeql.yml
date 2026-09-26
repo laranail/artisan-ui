@@ -1,0 +1,50 @@
+name: Code scanning
+
+on:
+  pull_request:
+    branches: [main]
+  schedule:
+    # Findings arrive from new rules as often as from new code, so this runs on
+    # a schedule as well as on every pull request.
+    - cron: '44 7 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# CodeQL has no PHP analyser, so this covers the browser runtime only. The PHP
+# side is held by PHPStan, the arch boundaries, and the access and execution
+# tests under tests/Feature.
+jobs:
+  analyse:
+    name: CodeQL (JavaScript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          # The committed bundle is generated from resources/js, which is
+          # scanned directly; scanning the minified copy only duplicates findings.
+          config: |
+            paths-ignore:
+              - resources/dist
+              - vendor
+              - node_modules
+
+      - name: Analyse
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: '/language:javascript-typescript'

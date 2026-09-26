@@ -1,0 +1,10 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Documentation
+    url: https://opensource.simtabi.com/documentation/laranail/artisan-ui/
+    about: Installation, authorization, the command policy, and a recipe for each common task.
+
+  - name: Security vulnerability
+    url: https://github.com/laranail/artisan-ui/security/policy
+    about: Report privately to security@simtabi.com. Please do not open an issue.

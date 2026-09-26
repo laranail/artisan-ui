@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+use Simtabi\Laranail\ArtisanUI\Core\Audit\CommandRun;
+use Simtabi\Laranail\ArtisanUI\Core\Support\ArtisanUIConfig;
+
+return new class extends Migration
+{
+    public function getConnection(): ?string
+    {
+        return app(ArtisanUIConfig::class)->auditConnection() ?? parent::getConnection();
+    }
+
+    public function up(): void
+    {
+        Schema::connection($this->getConnection())->create(CommandRun::TABLE, function (Blueprint $table): void {
+            $table->ulid('id')->primary();
+            $table->string('user_type')->nullable();
+            $table->string('user_id')->nullable();
+            $table->string('command')->index();
+            $table->json('arguments')->nullable();
+            $table->json('options')->nullable();
+            $table->string('risk', 32);
+            $table->string('status', 32)->index();
+            $table->integer('exit_code')->nullable();
+            $table->longText('output')->nullable();
+            $table->boolean('output_truncated')->default(false);
+            $table->text('error')->nullable();
+            $table->unsignedInteger('duration_ms')->nullable();
+            $table->string('ip', 45)->nullable();
+            $table->timestamp('started_at')->nullable();
+            $table->timestamp('finished_at')->nullable();
+            $table->timestamps();
+
+            $table->index(['user_type', 'user_id']);
+            $table->index('created_at');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::connection($this->getConnection())->dropIfExists(CommandRun::TABLE);
+    }
+};

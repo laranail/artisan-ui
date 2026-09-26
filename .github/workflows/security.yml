@@ -1,0 +1,56 @@
+name: Security
+
+on:
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '41 6 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# The laranail siblings resolve through git rather than Packagist, so every job
+# hits the GitHub API to enumerate their refs. The built-in token lifts the
+# shared unauthenticated rate limit; there is no secret to configure.
+env:
+  COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.GITHUB_TOKEN }}"}}'
+
+jobs:
+  audit:
+    name: Composer audit · dist integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # laranail-dist-integrity archives HEAD with `git archive`.
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.5'
+          coverage: none
+
+      - name: Drop cached laranail archives
+        # laranail/* resolve through a single MOVING v0.1.0 tag, so a cached dist
+        # archive under that name can be silently stale.
+        shell: bash
+        run: rm -rf "$(composer config cache-files-dir)/laranail"
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress
+
+      - name: Audit
+        run: composer audit --no-interaction
+
+      # The built browser bundle and the views must survive `git archive`, or a
+      # Composer install ships a panel with no script and no styles.
+      - name: Verify the dist archive keeps every shipped path
+        run: vendor/bin/laranail-dist-integrity

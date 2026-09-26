@@ -1,0 +1,14 @@
+.DS_Store
+.idea
+.vscode
+.claude
+.phpunit.result.cache
+.phpunit.cache
+.pest.cache
+build
+composer.lock
+coverage
+node_modules
+package-lock.json
+phpunit.xml.bak
+vendor

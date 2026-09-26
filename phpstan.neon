@@ -1,0 +1,30 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 8
+    paths:
+        - src
+        - config
+
+    # No baseline. A baseline is standing permission to be wrong, and this is a
+    # greenfield package; if analysis fails, the code is what should change.
+
+    ignoreErrors:
+        # larastan validates view-string literals against a skeleton app that
+        # never boots this package's provider, so the `laranail/artisan-ui::`
+        # namespace registered at runtime is invisible to it. The views exist;
+        # the feature suite renders every one of them.
+        - '#expects view-string, string given#'
+        - '#view-string\|null, string given#'
+
+        # env() is exactly what belongs in a config file.
+        -
+            identifier: larastan.noEnvCallsOutsideOfConfig
+            path: config/artisan-ui.php
+
+    treatPhpDocTypesAsCertain: false
+
+    # Only larastan 3.x emits the view-string error; an older one would turn the
+    # ignore itself into an unmatched-ignore error.
+    reportUnmatchedIgnoredErrors: false

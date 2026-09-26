@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest something the package should be able to do.
+labels: [enhancement]
+
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The problem, rather than the solution you have in mind for it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would it look like?
+      description: A sketch of the API, if you have one in mind.
+      render: php
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What have you tried instead?
+      description: >
+        Quick actions, output decorators, the command policy and the Gate abilities
+        are all extension points, so it may already be possible from the host app.

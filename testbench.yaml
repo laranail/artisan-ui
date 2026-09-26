@@ -1,0 +1,26 @@
+laravel: '@testbench'
+
+providers:
+  - Simtabi\Laranail\ArtisanUI\Providers\ArtisanUIServiceProvider
+  - Workbench\App\Providers\WorkbenchServiceProvider
+
+migrations:
+  - workbench/database/migrations
+
+seeders:
+  - Workbench\Database\Seeders\DatabaseSeeder
+
+workbench:
+  start: '/artisan'
+  install: false
+  welcome: false
+  discovers:
+    web: true
+    config: false
+  build:
+    - create-sqlite-db
+    - migrate:fresh
+    - db:seed:
+        --class: Workbench\Database\Seeders\DatabaseSeeder
+  assets: []
+  sync: []

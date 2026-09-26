@@ -1,0 +1,24 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Calls the one shared definition in laranail/.github, which owns the PHP
+# matrix (8.4 / 8.5), the composer cache and its laranail eviction,
+# prefer-lowest and the timeouts.
+jobs:
+  pest:
+    uses: laranail/.github/.github/workflows/tests.yml@main
+    with:
+      # Resolve whatever composer.json allows rather than letting the shared
+      # workflow `composer require` a Laravel version into the manifest.
+      laravel-versions: '["*"]'
+      php-extensions: 'dom, curl, libxml, mbstring, zip, pdo, sqlite3, pdo_sqlite'

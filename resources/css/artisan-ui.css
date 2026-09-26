@@ -1,0 +1,183 @@
+/*
+ * laranail/artisan-ui panel styles. Built by `npm run build` into resources/dist.
+ *
+ * Dark mode follows a `dark` class on <html>, set by resources/js/dom/theme.js from the
+ * operator's choice or the system preference.
+ */
+@import "tailwindcss";
+@plugin "@tailwindcss/forms";
+
+@source "../views";
+@source "../js";
+
+/*
+ * Dark follows the system preference, so the denied page (which loads no script) and the first
+ * paint of every page are right without JavaScript. An explicit choice from the toggle wins:
+ * `.dark` forces dark, `.light` forces light.
+ */
+@custom-variant dark {
+  &:where(.dark, .dark *) {
+    @slot;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &:where(:not(.light, .light *)) {
+      @slot;
+    }
+  }
+}
+
+@layer components {
+  .lau-output {
+    white-space: pre-wrap;
+    word-break: break-word;
+    tab-size: 4;
+  }
+
+  /* ANSI segments, from Core\Output\AnsiFormatter. The names are a fixed table. */
+  .lau-bold {
+    font-weight: 700;
+  }
+  .lau-dim {
+    opacity: 0.7;
+  }
+  .lau-italic {
+    font-style: italic;
+  }
+  .lau-underline {
+    text-decoration: underline;
+  }
+
+  .lau-fg-black {
+    color: var(--color-zinc-500);
+  }
+  .lau-fg-red {
+    color: var(--color-red-400);
+  }
+  .lau-fg-green {
+    color: var(--color-green-400);
+  }
+  .lau-fg-yellow {
+    color: var(--color-yellow-300);
+  }
+  .lau-fg-blue {
+    color: var(--color-blue-400);
+  }
+  .lau-fg-magenta {
+    color: var(--color-fuchsia-400);
+  }
+  .lau-fg-cyan {
+    color: var(--color-cyan-400);
+  }
+  .lau-fg-white {
+    color: var(--color-zinc-100);
+  }
+  .lau-fg-bright-black {
+    color: var(--color-zinc-400);
+  }
+  .lau-fg-bright-red {
+    color: var(--color-red-300);
+  }
+  .lau-fg-bright-green {
+    color: var(--color-green-300);
+  }
+  .lau-fg-bright-yellow {
+    color: var(--color-yellow-200);
+  }
+  .lau-fg-bright-blue {
+    color: var(--color-blue-300);
+  }
+  .lau-fg-bright-magenta {
+    color: var(--color-fuchsia-300);
+  }
+  .lau-fg-bright-cyan {
+    color: var(--color-cyan-300);
+  }
+  .lau-fg-bright-white {
+    color: var(--color-white);
+  }
+
+  .lau-bg-black {
+    background-color: var(--color-zinc-800);
+  }
+  .lau-bg-red {
+    background-color: var(--color-red-700);
+  }
+  .lau-bg-green {
+    background-color: var(--color-green-700);
+  }
+  .lau-bg-yellow {
+    background-color: var(--color-yellow-600);
+  }
+  .lau-bg-blue {
+    background-color: var(--color-blue-700);
+  }
+  .lau-bg-magenta {
+    background-color: var(--color-fuchsia-700);
+  }
+  .lau-bg-cyan {
+    background-color: var(--color-cyan-700);
+  }
+  .lau-bg-white {
+    background-color: var(--color-zinc-200);
+    color: var(--color-zinc-900);
+  }
+  .lau-bg-bright-black {
+    background-color: var(--color-zinc-600);
+  }
+  .lau-bg-bright-red {
+    background-color: var(--color-red-500);
+  }
+  .lau-bg-bright-green {
+    background-color: var(--color-green-500);
+  }
+  .lau-bg-bright-yellow {
+    background-color: var(--color-yellow-400);
+    color: var(--color-zinc-900);
+  }
+  .lau-bg-bright-blue {
+    background-color: var(--color-blue-500);
+  }
+  .lau-bg-bright-magenta {
+    background-color: var(--color-fuchsia-500);
+  }
+  .lau-bg-bright-cyan {
+    background-color: var(--color-cyan-500);
+  }
+  .lau-bg-bright-white {
+    background-color: var(--color-white);
+    color: var(--color-zinc-900);
+  }
+
+  [data-lau-status][data-tone="success"] {
+    color: var(--color-green-700);
+  }
+  [data-lau-status][data-tone="error"] {
+    color: var(--color-red-700);
+  }
+  [data-lau-status][data-tone="warning"] {
+    color: var(--color-amber-700);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) [data-lau-status][data-tone="success"] {
+      color: var(--color-green-400);
+    }
+    :root:not(.light) [data-lau-status][data-tone="error"] {
+      color: var(--color-red-400);
+    }
+    :root:not(.light) [data-lau-status][data-tone="warning"] {
+      color: var(--color-amber-400);
+    }
+  }
+
+  .dark [data-lau-status][data-tone="success"] {
+    color: var(--color-green-400);
+  }
+  .dark [data-lau-status][data-tone="error"] {
+    color: var(--color-red-400);
+  }
+  .dark [data-lau-status][data-tone="warning"] {
+    color: var(--color-amber-400);
+  }
+}
