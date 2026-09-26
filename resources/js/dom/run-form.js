@@ -98,6 +98,13 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
     say(parts.join(' · '), body.success ? 'success' : 'error')
   }
 
+  // A hook, a listener or the page threw: say so, tell the notifier, and never leave an
+  // unhandled rejection behind.
+  const fail = (error) => {
+    say(messages.unexpected, 'error')
+    notifier.notify('error', 'run:error', { error })
+  }
+
   const execute = async () => {
     // Claimed synchronously, before the first await: two submits in the same tick must not both
     // get through, because a run is not idempotent.
@@ -268,7 +275,7 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
   teardown.push(
     listen(form, 'submit', (event) => {
       event.preventDefault()
-      execute()
+      execute().catch(fail)
     }),
   )
 
@@ -285,7 +292,7 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
   }
 
   if (passwordForm) {
-    teardown.push(listen(passwordForm, 'submit', confirmPassword))
+    teardown.push(listen(passwordForm, 'submit', (event) => confirmPassword(event).catch(fail)))
   }
 
   const cancel = document.querySelector('[data-lau-password-cancel]')

@@ -76,6 +76,12 @@ First release. It adopts [`lorisleiva/artisan-ui`](https://github.com/lorisleiva
 - History rerun restores negated flags and valueless options.
 - Every user-facing string, validator messages included, is in the translation file. A test fails on any key the code asks for that the file lacks.
 
+### Found by the first CI run
+
+- An exception from a `run:before` listener or a hook no longer leaves an unhandled promise rejection: the client reports it as a failed run and tells the notifier. Every test had passed locally; the exit code had been hidden by piping `npm test` through `grep`.
+- CodeQL is skipped while the repository is private, since code scanning there needs GitHub Advanced Security; it runs once the repository is public.
+- The README carries the Tests and Static analysis badges, now that both run.
+
 ### Failure handling
 
 - A command that throws is recorded as errored and reported to the exception handler with its cause preserved; the browser gets a run id, in every environment.
