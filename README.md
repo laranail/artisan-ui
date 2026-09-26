@@ -1,8 +1,10 @@
 # laranail/artisan-ui
 
+[![Tests](https://github.com/laranail/artisan-ui/actions/workflows/tests.yml/badge.svg)](https://github.com/laranail/artisan-ui/actions/workflows/tests.yml)
+[![Static analysis](https://github.com/laranail/artisan-ui/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/laranail/artisan-ui/actions/workflows/static-analysis.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-There is no Packagist listing or CI run yet, so the licence badge is the only one whose claim is true; the registry-version, Tests and Static analysis badges arrive with the repository. [Install](#install) covers the VCS route.
+`laranail/artisan-ui` is not on Packagist, so there is no registry-version badge to show; [Install](#install) covers the VCS route.
 
 > A secure web panel for running Artisan commands, authorized per user and per command through Gate abilities, risk-classified, audited, with quick actions and run history.
 
