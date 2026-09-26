@@ -7,15 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- An exception from a `run:before` listener or a hook no longer leaves an unhandled promise rejection: the client reports it as a failed run and tells the notifier.
-
-### Changed
-
-- CodeQL is skipped while the repository is private, since code scanning there needs GitHub Advanced Security; it runs once the repository is public.
-- The README carries the Tests and Static analysis badges.
-
 ## [0.1.0] - 2026-09-26
 
 First release. It adopts [`lorisleiva/artisan-ui`](https://github.com/lorisleiva/artisan-ui) (last commit 2021-06, Laravel 8 only) into the laranail family on Laravel 13 and PHP 8.4/8.5. It folds in every upstream issue and pull request, and the features of [`pabloleone/artisan-ui`](https://github.com/pabloleone/artisan-ui) and [`dev-arindam-roy/artisan-ui`](https://github.com/dev-arindam-roy/artisan-ui), on an authorization model none of the three had.
@@ -84,6 +75,12 @@ First release. It adopts [`lorisleiva/artisan-ui`](https://github.com/lorisleiva
 - A disabled panel answers the framework's bare 404.
 - History rerun restores negated flags and valueless options.
 - Every user-facing string, validator messages included, is in the translation file. A test fails on any key the code asks for that the file lacks.
+
+### Found by the first CI run
+
+- An exception from a `run:before` listener or a hook no longer leaves an unhandled promise rejection: the client reports it as a failed run and tells the notifier. Every test had passed locally; the exit code had been hidden by piping `npm test` through `grep`.
+- CodeQL is skipped while the repository is private, since code scanning there needs GitHub Advanced Security; it runs once the repository is public.
+- The README carries the Tests and Static analysis badges, now that both run.
 
 ### Failure handling
 
