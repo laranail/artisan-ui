@@ -84,7 +84,7 @@ final class AnsiFormatter
         // OSC sequences (hyperlinks, titles), terminated by BEL or ST.
         $text = (string) preg_replace('/\e\][^\a\e]*(?:\a|\e\\\\)/', '', $text);
 
-        // CSI sequences other than SGR (cursor movement, erase line, …).
+        // CSI sequences other than SGR (cursor movement, erase line, ...).
         $text = (string) preg_replace('/\e\[[0-9;?]*[A-La-ln-z]/', '', $text);
 
         // Anything else left behind: a lone ESC and the character after it.
@@ -165,7 +165,7 @@ final class AnsiFormatter
                     $state['bg'] = null;
                     break;
                 case $code === 38 || $code === 48:
-                    // 38;5;n or 38;2;r;g;b — consume the parameters, render nothing.
+                    // 38;5;n or 38;2;r;g;b: consume the parameters, render nothing.
                     $i += ($codes[$i + 1] ?? null) === 2 ? 4 : 2;
                     break;
             }

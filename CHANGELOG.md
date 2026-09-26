@@ -58,7 +58,7 @@ First release. It adopts [`lorisleiva/artisan-ui`](https://github.com/lorisleiva
 - A guest from a disallowed environment or address gets a 403, not a login redirect that reveals the panel.
 - The client:
   - sends one run however fast Run or the password dialog is submitted;
-  - never leaves "Running…" behind;
+  - never leaves "Running..." behind;
   - falls back when `<dialog>.showModal()` is missing;
   - supports value-optional options ("send without a value") and negatable flags (`--no-name`).
 - Accessibility:
