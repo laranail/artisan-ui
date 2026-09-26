@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- An exception from a `run:before` listener or a hook no longer leaves an unhandled promise rejection: the client reports it as a failed run and tells the notifier.
+
+### Changed
+
+- CodeQL is skipped while the repository is private, since code scanning there needs GitHub Advanced Security; it runs once the repository is public.
+- The README carries the Tests and Static analysis badges.
+
 ## [0.1.0] - 2026-09-26
 
 First release. It adopts [`lorisleiva/artisan-ui`](https://github.com/lorisleiva/artisan-ui) (last commit 2021-06, Laravel 8 only) into the laranail family on Laravel 13 and PHP 8.4/8.5. It folds in every upstream issue and pull request, and the features of [`pabloleone/artisan-ui`](https://github.com/pabloleone/artisan-ui) and [`dev-arindam-roy/artisan-ui`](https://github.com/dev-arindam-roy/artisan-ui), on an authorization model none of the three had.

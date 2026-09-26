@@ -325,11 +325,6 @@ describe('round 3', () => {
       throw new Error('listener broke')
     }
     form.addEventListener('laranail-artisan-ui:run:before', boom)
-    const errors = []
-    window.addEventListener('error', (e) => {
-      errors.push(e)
-      e.preventDefault()
-    })
 
     submit()
     await tick()
@@ -337,5 +332,7 @@ describe('round 3', () => {
 
     form.removeEventListener('laranail-artisan-ui:run:before', boom)
     expect(document.querySelector('[data-lau-run-button]').hasAttribute('disabled')).toBe(false)
+    expect(status()).toContain('Something went wrong')
+    expect(fetch).not.toHaveBeenCalled()
   })
 })
