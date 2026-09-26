@@ -17,8 +17,8 @@ namespace Simtabi\Laranail\ArtisanUI\Core\Output;
  * consumed and ignored. Every other escape sequence, including OSC 8 hyperlinks, is removed.
  * Carriage-return progress redraws keep only their final state.
  *
- * `laranail/console` measures and truncates ANSI text but does not convert it; this is a
- * candidate to move there.
+ * `laranail/console` measures and truncates ANSI text but does not convert it. This stays
+ * here while it has one consumer: HTML segments are a web concern, not a terminal one.
  */
 final class AnsiFormatter
 {

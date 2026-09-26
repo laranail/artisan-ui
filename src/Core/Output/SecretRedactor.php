@@ -24,7 +24,9 @@ use Simtabi\Laranail\ArtisanUI\Core\Validation\ValidatedInput;
  * its value. None of this makes it safe to expose a command that prints secrets, and the
  * docs say so; it keeps an accidental one from landing in a log and a browser.
  *
- * Modelled on env-kit's SecretRedactor; a candidate to move into package-tools.
+ * Modelled on env-kit's SecretRedactor, which shares only the key test: it masks one value
+ * at a time for display, where this scans the environment and config. Kept separate until a
+ * third consumer shows what a shared contract should be.
  */
 final class SecretRedactor
 {

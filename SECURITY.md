@@ -2,11 +2,12 @@
 
 ## Reporting a vulnerability
 
-Report security issues privately to **security@simtabi.com**. Do not open a public issue for a suspected vulnerability.
+Do not open a public issue for a suspected vulnerability. Report it privately through either channel:
+
+- **Preferred:** [GitHub private vulnerability reporting](https://github.com/laranail/artisan-ui/security/advisories/new). The report stays attached to the repository, with a draft advisory and a CVE request path.
+- **Fallback:** email **security@simtabi.com**, if you have no GitHub account.
 
 Include the affected version, a description of the issue and, where you can, a minimal reproduction. You can expect an acknowledgement within three working days and a substantive reply within ten.
-
-GitHub private vulnerability reporting will be offered as the preferred channel once this repository is published and the feature is switched on. Until then, email is the only channel.
 
 ## Supported versions
 
