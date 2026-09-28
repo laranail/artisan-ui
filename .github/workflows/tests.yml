@@ -3,8 +3,8 @@ name: Tests
 on:
   pull_request:
     branches: [main]
-    paths-ignore:
-      - '**.md'
+    # No path filter: these jobs are required status checks, and a required check
+    # that never reports (a docs-only pull request) blocks the merge for good.
   workflow_dispatch:
   # macOS bills at 10x, so the cross-platform job runs Windows on every pull request
   # and adds macOS only on this weekly run.
