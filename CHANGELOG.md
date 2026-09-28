@@ -91,6 +91,8 @@ First release. It adopts [`lorisleiva/artisan-ui`](https://github.com/lorisleiva
 ### Tooling
 
 - `laranail::artisan-ui.install`, `laranail::artisan-ui.doctor` (also part of `laranail::package-tools.doctor`) and `laranail::artisan-ui.policy`. The doctor probes the cache store, since an unreachable one fails every run in the rate limiter before the panel is consulted.
+- CI runs the suite on Linux (PHP 8.4/8.5, lowest and stable dependencies) and Windows on every pull request, and on macOS weekly.
+- Vulnerabilities are reported through GitHub private vulnerability reporting, with `security@simtabi.com` as the fallback.
 - A workbench application (`composer serve`) with an admin and a non-admin user, for trying the panel end to end.
 - `ArtisanUI::fake()` for applications' own tests.
 - A framework-free ES module client with a composition root, cancelable `laranail-artisan-ui:*` events and hooks, and a strict CSP. The client (9 KB) and the compiled Tailwind stylesheet (31 KB) are committed and served from a content-hashed route; upstream shipped an unpurged 4 MB stylesheet and loaded Alpine and axios from a CDN without version pins.
