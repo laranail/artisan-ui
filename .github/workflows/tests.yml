@@ -6,6 +6,10 @@ on:
     paths-ignore:
       - '**.md'
   workflow_dispatch:
+  # macOS bills at 10x, so the cross-platform job runs Windows on every pull request
+  # and adds macOS only on this weekly run.
+  schedule:
+    - cron: '17 6 * * 2'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -22,3 +26,40 @@ jobs:
       # workflow `composer require` a Laravel version into the manifest.
       laravel-versions: '["*"]'
       php-extensions: 'dom, curl, libxml, mbstring, zip, pdo, sqlite3, pdo_sqlite'
+
+  cross-platform:
+    name: ${{ matrix.os }} · PHP 8.5
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Windows every PR: path handling (the asset route, published views, the
+        # SQLite workbench) is what breaks in PHP packages. Kept on one line: newlines
+        # inside ${{ }} are not reliably evaluated.
+        os: ${{ github.event_name == 'schedule' && fromJSON('["windows-latest","macos-latest"]') || fromJSON('["windows-latest"]') }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.5'
+          extensions: dom, curl, libxml, mbstring, zip, fileinfo, pdo, sqlite3, pdo_sqlite
+          coverage: none
+          ini-values: error_reporting=E_ALL
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --no-interaction --no-progress
+
+      - name: Run Pest
+        run: vendor/bin/pest
