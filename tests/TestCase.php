@@ -32,7 +32,8 @@ abstract class TestCase extends IsolatedTestCase
     {
         parent::defineEnvironment($app);
 
-        $app['config']->set('app.key', 'base64:2fl+Ktvkfl+Fuz4Qp/A75G2RTiWVA/ZoKZvp6fiiM10=');
+        // Generated per run: a key committed to a public repository is a key in the open.
+        $app['config']->set('app.key', 'base64:' . base64_encode(random_bytes(32)));
         $app['config']->set('session.driver', 'array');
         $app['config']->set('cache.default', 'array');
         $app['config']->set('auth.providers.users.model', User::class);
