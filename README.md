@@ -38,7 +38,17 @@ Gate::define('laranail-artisan-ui.access', fn (User $user) => $user->isAdmin());
 Gate::define('laranail-artisan-ui.run', fn (User $user, $command, array $input) => $user->isAdmin());
 ```
 
-## Quick start
+## Quick start guide and usage
+
+### Getting started
+
+Every default fails closed, so the panel is unreachable until three things are true:
+
+1. `php artisan laranail::artisan-ui.install` has run (see Install). It publishes `config/laranail/artisan-ui.php` and the migration for the `laranail_artisan_ui_runs` table, which only the `database` audit driver needs.
+2. The `laranail-artisan-ui.access` and `laranail-artisan-ui.run` abilities are defined (see Install). Both deny until you do.
+3. `LARANAIL_ARTISAN_UI_ENABLED=true` is set. While it is false the routes are not registered at all, and the panel answers only in the `local` environment unless you widen `environments`.
+
+### Usage
 
 ```bash
 # With the `access` and `run` abilities defined (see Install), switch the panel on and check it.
