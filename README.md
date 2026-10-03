@@ -38,6 +38,18 @@ Gate::define('laranail-artisan-ui.access', fn (User $user) => $user->isAdmin());
 Gate::define('laranail-artisan-ui.run', fn (User $user, $command, array $input) => $user->isAdmin());
 ```
 
+## Quick start
+
+```bash
+# With the `access` and `run` abilities defined (see Install), switch the panel on and check it.
+echo "LARANAIL_ARTISAN_UI_ENABLED=true" >> .env
+php artisan laranail::artisan-ui.doctor
+
+# Then sign in as an allowed user, open /artisan, pick `about` and press Run.
+```
+
+The full walkthrough is in [Getting started](docs/getting-started.md); everything else is in the [documentation index](#documentation).
+
 ## <a name="documentation"></a>Documentation
 
 Full documentation is at **[opensource.simtabi.com/documentation/laranail/artisan-ui](https://opensource.simtabi.com/documentation/laranail/artisan-ui/)**.
