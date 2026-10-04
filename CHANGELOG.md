@@ -96,3 +96,5 @@ First release. It adopts [`lorisleiva/artisan-ui`](https://github.com/lorisleiva
 - A workbench application (`composer serve`) with an admin and a non-admin user, for trying the panel end to end.
 - `ArtisanUI::fake()` for applications' own tests.
 - A framework-free ES module client with a composition root, cancelable `laranail-artisan-ui:*` events and hooks, and a strict CSP. The client (9 KB) and the compiled Tailwind stylesheet (31 KB) are committed and served from a content-hashed route; upstream shipped an unpurged 4 MB stylesheet and loaded Alpine and axios from a CDN without version pins.
+
+[Unreleased]: https://github.com/laranail/artisan-ui/compare/v0.1.0...HEAD
