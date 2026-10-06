@@ -123,6 +123,8 @@ Features carried over from the two forks, all on the authenticated-user and Gate
 
 Deliberately not carried over: hardcoded credentials, a run endpoint reachable by unauthenticated `GET`, a panel that is on by default with no authentication, and scripts loaded unpinned from a CDN.
 
+The [`laranail::artisan-ui.tidy`](tools/tidy.md) maintenance command moved here from `laranail/toolkit`, where it was `laranail::toolkit.tidy`; toolkit removes it in 0.3.0. Its behaviour is unchanged. Toolkit's seven unauthenticated `GET` routes that ran it and six cache commands were not ported: their capability is the Caches quick-action group, which gained `clear-compiled`, and a Tidy group, both behind the panel's authenticated, Gate-checked `POST`.
+
 ---
 
 [← Docs index](../README.md#documentation)

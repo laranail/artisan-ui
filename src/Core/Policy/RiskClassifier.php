@@ -92,6 +92,10 @@ final readonly class RiskClassifier
         'horizon:terminate',
         'horizon:clear',
         'horizon:purge',
+        // This package's own maintenance command. It deletes files under storage, and its
+        // `db` action runs `migrate:fresh`; one name covers every action, so the class is
+        // set by the worst of them, as `migrate:*` is.
+        'laranail::artisan-ui.tidy',
     ];
 
     /**

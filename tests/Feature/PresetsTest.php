@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Contracts\Console\Kernel;
 use Simtabi\Laranail\ArtisanUI\Facades\ArtisanUI;
 use Simtabi\Laranail\ArtisanUI\Core\Presets\QuickAction;
 use Simtabi\Laranail\ArtisanUI\Core\Presets\PresetCatalog;
@@ -58,4 +59,49 @@ it('can be switched off', function (): void {
     config()->set('laranail.artisan-ui.presets.enabled', false);
 
     expect(app(PresetCatalog::class)->groups())->toBe([]);
+});
+
+it('offers clear-compiled in the caches group, the one cache command the old toolkit routes had that the group lacked', function (): void {
+    $caches = collect(app(PresetCatalog::class)->groups())->firstWhere('key', 'caches');
+
+    expect(array_map(static fn (QuickAction $a): string => $a->command, $caches->actions))
+        ->toContain('clear-compiled', 'optimize', 'route:cache', 'cache:clear', 'view:clear', 'config:cache');
+});
+
+it('offers a tidy group of regenerable actions only, never storage or db', function (): void {
+    $tidy = collect(app(PresetCatalog::class)->groups())->firstWhere('key', 'tidy');
+
+    expect($tidy)->not->toBeNull();
+
+    $actions = collect($tidy->actions);
+
+    expect($actions->pluck('command')->unique()->all())->toBe(['laranail::artisan-ui.tidy'])
+        ->and($actions->map(static fn (QuickAction $a): mixed => $a->arguments['action'] ?? null)->unique()->sort()->values()->all())
+        ->toBe(['cache', 'logs', 'temp'])
+        // Every destructive action has a preview twin.
+        ->and($actions->filter(static fn (QuickAction $a): bool => ($a->options['dry-run'] ?? false) === true))->toHaveCount(3)
+        // Log deletion is always scoped by age.
+        ->and($actions->filter(static fn (QuickAction $a): bool => $a->arguments['action'] === 'logs')->every(static fn (QuickAction $a): bool => isset($a->options['days'])))->toBeTrue()
+        // --unfiltered is the user-file escape hatch; no quick action may carry it.
+        ->and($actions->contains(static fn (QuickAction $a): bool => array_key_exists('unfiltered', $a->options)))->toBeFalse();
+});
+
+it('pre-fills only options the tidy command defines', function (): void {
+    $definition = app(Kernel::class)->all()['laranail::artisan-ui.tidy']->getDefinition();
+
+    foreach (PresetCatalog::defaults() as $group) {
+        foreach ($group->actions as $action) {
+            if ($action->command !== 'laranail::artisan-ui.tidy') {
+                continue;
+            }
+
+            foreach (array_keys($action->options) as $option) {
+                expect($definition->hasOption($option))->toBeTrue("tidy has no --{$option}");
+            }
+
+            foreach (array_keys($action->arguments) as $argument) {
+                expect($definition->hasArgument($argument))->toBeTrue("tidy has no {$argument} argument");
+            }
+        }
+    }
 });

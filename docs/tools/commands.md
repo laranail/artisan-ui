@@ -1,12 +1,13 @@
 # Commands
 
-Three Artisan commands ship with the package, all under the family's `laranail::artisan-ui.*` names: `install`, `doctor` and `policy`.
+Four Artisan commands ship with the package, all under the family's `laranail::artisan-ui.*` names: `install`, `doctor`, `policy` and `tidy`.
 
 | Command | Purpose |
 |---|---|
 | `laranail::artisan-ui.install` | Publish the config and migration, offer to migrate, explain the abilities. |
 | `laranail::artisan-ui.doctor` | Report exposure, abilities, guard, maintenance mode, audit, locks, assets and Octane. |
 | `laranail::artisan-ui.policy` | Show, for every command, whether the panel lists it and its risk class. |
+| `laranail::artisan-ui.tidy` | Path-confined maintenance: flush the cache, sweep logs, temp and scoped uploads, or rebuild the database. See [Tidy](tidy.md). |
 
 There are no bare aliases such as `artisan-ui:install`; see the family naming rules.
 
@@ -119,6 +120,14 @@ $ php artisan laranail::artisan-ui.policy --risk=destructive
     { "command": "serve", "listed": false, "risk": "forbidden", "reason": "forbidden" }
 ]
 ```
+
+## `laranail::artisan-ui.tidy`
+
+```bash
+php artisan laranail::artisan-ui.tidy [cache|logs|temp|storage|db|all] [--days=] [--size=] [--seed] [--optimize] [--dry-run] [--unfiltered] [--force]
+```
+
+Moved here from `laranail/toolkit` (`laranail::toolkit.tidy`). Every deletion is confined to `storage_path()`, an unscoped sweep of user uploads is refused, and `db` (`migrate:fresh`) needs `--force` and is never part of `all`. The full reference is [Tidy](tidy.md).
 
 ## Also registered
 

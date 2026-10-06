@@ -47,3 +47,15 @@ it('lets an application forbid its own commands', function (): void {
 
     expect(app(RiskClassifier::class)->classify('app:daemon'))->toBe(CommandRisk::Forbidden);
 });
+
+it('classifies the tidy command destructive, as it deletes files and its db action runs migrate:fresh', function (): void {
+    expect(app(RiskClassifier::class)->classify('laranail::artisan-ui.tidy'))->toBe(CommandRisk::Destructive)
+        ->and(app(RiskClassifier::class)->classify('laranail::artisan-ui.tidy'))->toBe(app(RiskClassifier::class)->classify('migrate:fresh'))
+        ->and(app(RiskClassifier::class)->classify('clear-compiled'))->toBe(CommandRisk::Safe);
+});
+
+it('keeps tidy destructive even when an application lists it as writes-files', function (): void {
+    config()->set('laranail.artisan-ui.risk.writes_files', ['laranail::artisan-ui.*']);
+
+    expect(app(RiskClassifier::class)->classify('laranail::artisan-ui.tidy'))->toBe(CommandRisk::Destructive);
+});

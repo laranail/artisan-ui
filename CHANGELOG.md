@@ -7,7 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `laranail::artisan-ui.tidy`, moved from `laranail/toolkit` (`laranail::toolkit.tidy`, removed
+  there in 0.3.0). Path-confined maintenance: `cache`, `logs`, `temp`, `storage`, `db` and `all`,
+  with `--days`, `--size`, `--seed`, `--optimize`, `--dry-run`, `--unfiltered` and `--force`.
+  Behaviour is unchanged: every deletion stays inside `storage_path()`, an unscoped sweep of user
+  uploads is refused (outright in production), and `db` runs `migrate:fresh` only with `--force`
+  and never as part of `all`. Its collaborators are now the framework's cache `Repository` and the
+  PSR-3 logger. It is classified destructive in the panel. Its tests, including the user-file
+  guard regression, moved with it. See `docs/tools/tidy.md`.
+
 ### Changed
+
+- The Caches quick-action group gains `clear-compiled`, and a new Tidy group pre-fills tidy's
+  regenerable actions (`cache`, `logs --days=7`, `temp`), each with a dry-run twin and none for
+  `storage` or `db`. Together they replace toolkit's unauthenticated `GET` maintenance routes,
+  which were not ported.
 
 - `require` declares what `src/` uses directly: `illuminate/config`, `illuminate/container` and
   `illuminate/translation` (reached through `config()`, `app()` and `__()`), and `laravel/framework`,

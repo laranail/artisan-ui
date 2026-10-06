@@ -68,9 +68,9 @@ Commands that destroy data, rotate secrets or take the application down.
 | `schedule:test` | `queue:retry` |
 | `queue:retry-batch` | `env:encrypt` |
 | `horizon:terminate` | `horizon:clear` |
-| `horizon:purge` | |
+| `horizon:purge` | `laranail::artisan-ui.tidy` |
 
-`down` is destructive because running it from the panel locks the panel out too, unless the panel's path is exempt from maintenance mode or `down --secret` is used. `key:generate` rotates `APP_KEY`, which signs everyone out and makes previously encrypted data unreadable. `schedule:test` runs whichever scheduled task is picked, whatever it does; `queue:retry` re-dispatches jobs that failed for a reason; `env:encrypt` rewrites `.env.encrypted`.
+`down` is destructive because running it from the panel locks the panel out too, unless the panel's path is exempt from maintenance mode or `down --secret` is used. `key:generate` rotates `APP_KEY`, which signs everyone out and makes previously encrypted data unreadable. `schedule:test` runs whichever scheduled task is picked, whatever it does; `queue:retry` re-dispatches jobs that failed for a reason; `env:encrypt` rewrites `.env.encrypted`. This package's own [`laranail::artisan-ui.tidy`](tidy.md) deletes files under storage and its `db` action runs `migrate:fresh`; one name covers every action, so it takes the class of the worst.
 
 ### Writes files (`RiskClassifier::WRITES_FILES`)
 

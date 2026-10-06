@@ -11,6 +11,7 @@ use Simtabi\Laranail\Package\Tools\Package;
 use Simtabi\Laranail\ArtisanUI\Doctor\Checks;
 use Simtabi\Laranail\ArtisanUI\Enums\Ability;
 use Simtabi\Laranail\ArtisanUI\Enums\AuditDriver;
+use Simtabi\Laranail\ArtisanUI\Commands\TidyCommand;
 use Simtabi\Laranail\ArtisanUI\Core\Audit\CommandRun;
 use Simtabi\Laranail\ArtisanUI\Commands\DoctorCommand;
 use Simtabi\Laranail\ArtisanUI\Commands\PolicyCommand;
@@ -70,6 +71,7 @@ final class ArtisanUIServiceProvider extends PackageServiceProvider
             ->hasCommands([
                 DoctorCommand::class,
                 PolicyCommand::class,
+                TidyCommand::class,
             ])
             ->hasInstallCommand(
                 InstallCommandDefinition::make()
