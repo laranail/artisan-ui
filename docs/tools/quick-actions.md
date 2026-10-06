@@ -1,6 +1,6 @@
 # Quick actions
 
-Six built-in groups of quick actions, served by `Simtabi\Laranail\ArtisanUI\Core\Presets\PresetCatalog`, put common commands one click from a pre-filled form on the home screen.
+Seven built-in groups of quick actions, served by `Simtabi\Laranail\ArtisanUI\Core\Presets\PresetCatalog`, put common commands one click from a pre-filled form on the home screen.
 
 ## A quick action never runs anything
 
@@ -12,14 +12,17 @@ An action is dropped when its command is not listed, so a quick action can never
 
 | Key | Label | Actions |
 |---|---|---|
-| `caches` | Caches | `optimize`, `optimize:clear`, `cache:clear`, `config:cache`, `config:clear`, `route:cache`, `route:clear`, `view:cache`, `view:clear`, `event:cache`, `event:clear` |
+| `caches` | Caches | `optimize`, `optimize:clear`, `cache:clear`, `config:cache`, `config:clear`, `route:cache`, `route:clear`, `view:cache`, `view:clear`, `event:cache`, `event:clear`, `clear-compiled` |
 | `storage` | Storage | `storage:link`, `storage:link --force`, `storage:unlink` |
 | `database` | Database | `migrate:status`, `migrate`, `migrate --seed`, `migrate:rollback`, `migrate:rollback --step=1`, `migrate:fresh --seed`, `db:seed`, `db:show` |
 | `tables` | Framework tables | `make:cache-table`, `make:notifications-table`, `make:queue-table`, `make:queue-failed-table`, `make:queue-batches-table`, `make:session-table` |
 | `generators` | Generators | `make:model` with migration, factory, seeder and controller; `make:controller` resource, API and invokable; `make:migration`, `make:request`, `make:policy`, `make:job`, `make:event`, `make:listener`, `make:mail`, `make:notification`, `make:middleware`, `make:command`, `make:seeder`, `make:factory` |
 | `maintenance` | Maintenance | `key:generate`, `down --secret=`, `up`, `about` |
+| `tidy` | Tidy | `laranail::artisan-ui.tidy` with `cache --dry-run`, `cache --force`, `logs --days=7 --dry-run`, `logs --days=7 --force`, `temp --dry-run`, `temp --force` |
 
 The maintenance group's `down` action pre-fills an empty `--secret` to prompt for one: without a secret, `down` locks the panel out too.
+
+The tidy group covers only [tidy](tidy.md)'s regenerable actions, each with a dry-run twin, and scopes log deletion to files older than seven days. It has nothing for `storage`, which sweeps user uploads, or `db`, which runs `migrate:fresh`; both remain reachable through the command's own form. The non-dry-run actions pre-fill `--force`, because the panel runs every command non-interactively and tidy's confirmation would otherwise answer no and delete nothing. The command is destructive, so every one of them, previews included, still asks for the command name and the password.
 
 ## The duplicate-migration guard
 

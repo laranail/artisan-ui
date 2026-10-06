@@ -78,7 +78,7 @@ Full documentation is at **[opensource.simtabi.com/documentation/laranail/artisa
 - [Discovery](docs/tools/discovery.md) · [Command policy](docs/tools/command-policy.md) · [Risk levels](docs/tools/risk-levels.md)
 - [Authorization](docs/tools/authorization.md) · [Execution](docs/tools/execution.md) · [Output](docs/tools/output.md)
 - [Quick actions](docs/tools/quick-actions.md) · [Audit and history](docs/tools/audit-history.md) · [Events and hooks](docs/tools/events.md)
-- [Web UI](docs/tools/web-ui.md) · [Commands](docs/tools/commands.md) · [Extending](docs/tools/extending.md)
+- [Web UI](docs/tools/web-ui.md) · [Commands](docs/tools/commands.md) · [Tidy](docs/tools/tidy.md) · [Extending](docs/tools/extending.md)
 
 ### Recipes
 

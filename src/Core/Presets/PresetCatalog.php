@@ -50,6 +50,7 @@ final class PresetCatalog
                 $a('Clear compiled views', 'view:clear'),
                 $a('Cache events', 'event:cache'),
                 $a('Clear event cache', 'event:clear'),
+                $a('Clear compiled classes', 'clear-compiled', description: 'Remove the compiled services and packages files.'),
             ]),
             new PresetGroup('storage', 'Storage', [
                 $a('Link storage', 'storage:link'),
@@ -95,6 +96,18 @@ final class PresetCatalog
                 $a('Bring application up', 'up'),
                 $a('About', 'about'),
             ]),
+            // The tidy command's regenerable actions only. `storage` sweeps user uploads and
+            // `db` runs migrate:fresh, so neither is ever one click away; both stay reachable
+            // through the command's own form. `--force` is pre-filled because the panel runs
+            // non-interactively, where tidy's confirmation answers no and nothing happens.
+            new PresetGroup('tidy', 'Tidy', [
+                $a('Preview flushing the cache', 'laranail::artisan-ui.tidy', ['dry-run' => true], ['action' => 'cache']),
+                $a('Flush the cache', 'laranail::artisan-ui.tidy', ['force' => true], ['action' => 'cache']),
+                $a('Preview old logs', 'laranail::artisan-ui.tidy', ['days' => '7', 'dry-run' => true], ['action' => 'logs'], 'Lists log files older than 7 days.'),
+                $a('Delete old logs', 'laranail::artisan-ui.tidy', ['days' => '7', 'force' => true], ['action' => 'logs'], 'Deletes log files older than 7 days.'),
+                $a('Preview temp files', 'laranail::artisan-ui.tidy', ['dry-run' => true], ['action' => 'temp']),
+                $a('Delete temp files', 'laranail::artisan-ui.tidy', ['force' => true], ['action' => 'temp'], 'app/temp, app/tmp and framework/cache/data under storage.'),
+            ], 'Housekeeping through laranail::artisan-ui.tidy. Previews delete nothing.'),
         ];
     }
 
