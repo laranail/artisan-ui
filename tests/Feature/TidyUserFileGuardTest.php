@@ -2,6 +2,13 @@
 
 declare(strict_types=1);
 
+// These tests delete files under storage/logs, laravel.log included, while Monolog holds it open. On
+// Windows a file with a pending delete cannot be reopened, so the next log write throws. No test here
+// asserts on log output, so logging goes to the null channel.
+beforeEach(function (): void {
+    config()->set('logging.default', 'null');
+});
+
 /*
  * `tidy storage` sweeps `app/public`, `app/uploads` and `app/exports`. The
  * first of those is the disk behind `storage:link` — user uploads.

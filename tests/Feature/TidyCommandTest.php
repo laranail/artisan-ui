@@ -5,6 +5,13 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Artisan;
 
+// These tests delete files under storage/logs, laravel.log included, while Monolog holds it open. On
+// Windows a file with a pending delete cannot be reopened, so the next log write throws. No test here
+// asserts on log output, so logging goes to the null channel.
+beforeEach(function (): void {
+    config()->set('logging.default', 'null');
+});
+
 /*
  * Ported from laranail/toolkit's tests/Unit/Console/TidyCommandTest.php with the command, when
  * it moved here from `laranail::toolkit.tidy`. The assertions are the same; only the command

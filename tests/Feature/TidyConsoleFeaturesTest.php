@@ -7,6 +7,13 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Simtabi\Laranail\ArtisanUI\Commands\TidyCommand;
 use Symfony\Component\Console\Output\BufferedOutput;
 
+// These tests delete files under storage/logs, laravel.log included, while Monolog holds it open. On
+// Windows a file with a pending delete cannot be reopened, so the next log write throws. No test here
+// asserts on log output, so logging goes to the null channel.
+beforeEach(function (): void {
+    config()->set('logging.default', 'null');
+});
+
 /*
  * Exercises the console-toolkit features tidy adopts from `laranail/console`: the
  * `$this->services` lifecycle (metadata, signals, performance, logger) and the fluent
