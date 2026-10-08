@@ -88,7 +88,7 @@ Output reaches the browser as text segments rendered with `textContent`, never a
 
 1. the value of every environment variable whose name matches `redaction.keys`, wherever it appears (with and without a `base64:` prefix);
 2. `NAME=value` and `NAME: value` lines whose name matches;
-3. the password in `scheme://user:password@host` URLs.
+3. the password in `scheme://<user>:<password>@host` URLs.
 
 Recorded input is masked by key: an option named `--password` is stored masked whatever its value.
 

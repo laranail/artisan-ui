@@ -68,7 +68,7 @@ it('records a row per run with the database driver, masking secret input', funct
     $id = $this->withSession(['auth.password_confirmed_at' => time()])
         ->postJson(route('laranail-artisan-ui.execute', 'lau-fixture:wipe'), [
             'confirm' => 'lau-fixture:wipe',
-            'options' => ['password' => 'hunter2'],
+            'options' => ['password' => 'redaction-canary-not-a-secret'],
         ])->assertOk()->json('run_id');
 
     $run = CommandRun::query()->findOrFail($id);

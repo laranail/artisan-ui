@@ -100,7 +100,7 @@ it('never shows exception detail, reports it with its cause, and records the run
     $response = runCommand('lau-fixture:throw')->assertOk()->assertJson(['status' => 'errored', 'success' => false]);
 
     expect($response->json('error'))->toContain($response->json('run_id'))
-        ->not->toContain('hunter22')
+        ->not->toContain('redaction-canary-not-a-secret')
         ->not->toContain('internal detail');
 
     Exceptions::assertReported(static fn (CommandRunFailed $e): bool => $e->command === 'lau-fixture:throw'
