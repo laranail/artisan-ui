@@ -15,6 +15,9 @@ final class ThrowCommand extends Command
 
     public function handle(): int
     {
-        throw new RuntimeException('internal detail: mysql://root:hunter22@db/prod');
+        // Built at run time so no credentialed URL literal sits in the source.
+        $password = 'redaction-canary-not-a-secret';
+
+        throw new RuntimeException('internal detail: mysql://root:' . $password . '@db/prod');
     }
 }

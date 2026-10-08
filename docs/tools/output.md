@@ -59,8 +59,8 @@ The failure is reported and recorded in package-tools' `BootReport` as `laranail
 | Pass | Masks | Example |
 |---|---|---|
 | 1. Known secret values | the value of every environment variable (`$_SERVER`, `$_ENV`, `getenv()`) whose name matches `redaction.keys`, and of every credential in the loaded config (`app.key`, `app.previous_keys.*`, and keys whose last segment is `password`, `secret`, `token`, `api_key`, `client_secret`, `private_key`, `dsn` and similar; never a class name, never `app.aliases`), wherever it appears. Under `config:cache` the config is the only source. For a `base64:` value, the bare value too. Values shorter than `redaction.min_scrub_length` (8 for config) are skipped. Longest first. When output was cut at the cap, a trailing fragment of at least 8 characters that starts a secret is masked too. | `tok_live_0123456789` → `••••••••` |
-| 2. `NAME=value` lines | a line whose name matches `redaction.keys`, with `=` or `:`, optionally after `export` | `DB_PASSWORD=hunter2` → `DB_PASSWORD=••••••••` |
-| 3. URL credentials | the password in `scheme://user:password@host` | `redis://default:s3cr3t@cache:6379` → `redis://default:••••••••@cache:6379` |
+| 2. `NAME=value` lines | a line whose name matches `redaction.keys`, with `=` or `:`, optionally after `export` | `DB_PASSWORD=redaction-canary-not-a-secret` → `DB_PASSWORD=••••••••` |
+| 3. URL credentials | the password in `scheme://<user>:<password>@host` | `redis://default:<password>@cache:6379` → `redis://default:••••••••@cache:6379` <!-- gitleaks:allow: the redacted output, not a credential --> |
 
 Names are matched case-insensitively against the wildcard patterns in `redaction.keys` (defaults: `*password*`, `*secret*`, `*token*`, `*_key`, `key`, `*private*`, `*dsn*`, `*credential*`).
 

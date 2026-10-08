@@ -26,20 +26,24 @@ it('does not scrub values shorter than the minimum, so "abc" is not blanked ever
 });
 
 it('masks NAME=value lines whose name looks secret', function (): void {
-    $out = app(SecretRedactor::class)->scrub("APP_NAME=Laravel\nDB_PASSWORD=hunter2\nexport STRIPE_SECRET: sk_x");
+    $out = app(SecretRedactor::class)->scrub("APP_NAME=Laravel\nDB_PASSWORD=redaction-canary-not-a-secret\nexport STRIPE_SECRET: sk_x");
 
     expect($out)->toBe("APP_NAME=Laravel\nDB_PASSWORD=••••••••\nexport STRIPE_SECRET: ••••••••");
 });
 
 it('masks the password in credentialed URLs', function (): void {
-    expect(app(SecretRedactor::class)->scrub('redis://default:s3cr3t@cache:6379'))
-        ->toBe('redis://default:••••••••@cache:6379');
+    // Built at run time so no credentialed URL literal sits in the source.
+    $password = 'redaction-canary-not-a-secret';
+    $mask = '••••••••';
+
+    expect(app(SecretRedactor::class)->scrub('redis://default:' . $password . '@cache:6379'))
+        ->toBe('redis://default:' . $mask . '@cache:6379');
 });
 
 it('masks recorded input by key, and leaves flags alone', function (): void {
     $input = app(SecretRedactor::class)->redactInput([
         'arguments' => ['name' => 'users'],
-        'options'   => ['password' => 'hunter2', 'api-token' => 'x', 'force' => true],
+        'options'   => ['password' => 'redaction-canary-not-a-secret', 'api-token' => 'x', 'force' => true],
     ]);
 
     expect($input)->toBe([

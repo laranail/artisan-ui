@@ -24,7 +24,7 @@ use Simtabi\Laranail\ArtisanUI\Core\Exceptions\RedactedException;
  * Regressions for the second security review. Each test names the defect it pins.
  */
 it('scrubs output with long runs of blank lines in linear time (quadratic regex)', function (): void {
-    $text = str_repeat("\n", 200_000) . "DB_PASSWORD=hunter2\n";
+    $text = str_repeat("\n", 200_000) . "DB_PASSWORD=redaction-canary-not-a-secret\n";
 
     $started = microtime(true);
     $out = app(SecretRedactor::class)->scrub($text);
@@ -73,7 +73,7 @@ it('reports a redacted copy of the exception chain, keeping the original class (
 
         return $cause instanceof RedactedException
             && $cause->originalClass === RuntimeException::class
-            && ! str_contains($cause->getMessage(), 'hunter22')
+            && ! str_contains($cause->getMessage(), 'redaction-canary-not-a-secret')
             && str_contains($cause->getMessage(), '••••••••')
             && $e->context()['actual'] === 'threw RuntimeException';
     });
