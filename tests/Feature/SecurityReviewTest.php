@@ -13,6 +13,7 @@ use Simtabi\Laranail\ArtisanUI\Core\Execution\RunContext;
 use Simtabi\Laranail\ArtisanUI\Core\Contracts\RunRecorder;
 use Simtabi\Laranail\ArtisanUI\Core\Output\SecretRedactor;
 use Simtabi\Laranail\ArtisanUI\Core\Policy\RiskClassifier;
+use Simtabi\Laranail\Package\Tools\Testing\TestCredentials;
 use Simtabi\Laranail\ArtisanUI\Core\Support\ArtisanUIConfig;
 use Simtabi\Laranail\ArtisanUI\Core\Discovery\CommandRegistry;
 use Simtabi\Laranail\ArtisanUI\Core\Execution\CommandExecutor;
@@ -24,7 +25,7 @@ use Simtabi\Laranail\ArtisanUI\Core\Exceptions\RedactedException;
  * Regressions for the second security review. Each test names the defect it pins.
  */
 it('scrubs output with long runs of blank lines in linear time (quadratic regex)', function (): void {
-    $text = str_repeat("\n", 200_000) . "DB_PASSWORD=redaction-canary-not-a-secret\n";
+    $text = str_repeat("\n", 200_000) . 'DB_PASSWORD=' . TestCredentials::secret('canary') . "\n";
 
     $started = microtime(true);
     $out = app(SecretRedactor::class)->scrub($text);
@@ -73,7 +74,7 @@ it('reports a redacted copy of the exception chain, keeping the original class (
 
         return $cause instanceof RedactedException
             && $cause->originalClass === RuntimeException::class
-            && ! str_contains($cause->getMessage(), 'redaction-canary-not-a-secret')
+            && ! str_contains($cause->getMessage(), TestCredentials::secret('canary'))
             && str_contains($cause->getMessage(), '••••••••')
             && $e->context()['actual'] === 'threw RuntimeException';
     });
@@ -118,10 +119,10 @@ it('masks the head of a secret cut in half at the output cap', function (): void
 });
 
 it('scrubs secrets that live only in configuration, as under config:cache', function (): void {
-    config()->set('services.acme.secret', 'config-only-secret-value');
+    config()->set('services.acme.secret', TestCredentials::secret('config'));
 
     expect(app(SecretRedactor::class)->scrub('the key is config-only-secret-value'))
-        ->not->toContain('config-only-secret-value');
+        ->not->toContain(TestCredentials::secret('config'));
 });
 
 it('answers a guest from a disallowed address with 403, not a login redirect that reveals the panel', function (): void {

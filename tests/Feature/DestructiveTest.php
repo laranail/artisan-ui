@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Simtabi\Laranail\ArtisanUI\Tests\TestCase;
+use Simtabi\Laranail\Package\Tools\Testing\TestCredentials;
 use Simtabi\Laranail\ArtisanUI\Tests\Fixtures\Commands\WipeCommand;
 
 beforeEach(function (): void {
@@ -28,11 +29,13 @@ it('needs a fresh password confirmation', function (): void {
 });
 
 it('rejects a wrong password and accepts the right one, checked against the user provider', function (): void {
-    $this->postJson(route('laranail-artisan-ui.confirm-password'), ['password' => 'nope'])
+    expect(TestCredentials::password('wrong'))->not->toBe(TestCase::password());
+
+    $this->postJson(route('laranail-artisan-ui.confirm-password'), ['password' => TestCredentials::password('wrong')])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['password']);
 
-    $this->postJson(route('laranail-artisan-ui.confirm-password'), ['password' => TestCase::PASSWORD])
+    $this->postJson(route('laranail-artisan-ui.confirm-password'), ['password' => TestCase::password()])
         ->assertOk()
         ->assertSessionHas('auth.password_confirmed_at');
 
@@ -66,10 +69,10 @@ it('can drop the password step, but never the typed confirmation', function (): 
 
 it('throttles password attempts', function (): void {
     foreach (range(1, 5) as $attempt) {
-        $this->postJson(route('laranail-artisan-ui.confirm-password'), ['password' => 'nope'])->assertStatus(422);
+        $this->postJson(route('laranail-artisan-ui.confirm-password'), ['password' => TestCredentials::password('wrong')])->assertStatus(422);
     }
 
-    $this->postJson(route('laranail-artisan-ui.confirm-password'), ['password' => 'nope'])->assertStatus(429);
+    $this->postJson(route('laranail-artisan-ui.confirm-password'), ['password' => TestCredentials::password('wrong')])->assertStatus(429);
 });
 
 it('hands out a fresh CSRF token for a long-open page', function (): void {
