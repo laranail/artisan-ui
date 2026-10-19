@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Exceptions;
 use Simtabi\Laranail\ArtisanUI\Enums\Ability;
 use Simtabi\Laranail\ArtisanUI\Core\Events\CommandFailed;
 use Simtabi\Laranail\ArtisanUI\Core\Events\CommandExecuted;
+use Simtabi\Laranail\Package\Tools\Testing\TestCredentials;
 use Simtabi\Laranail\ArtisanUI\Core\Events\CommandExecuting;
 use Simtabi\Laranail\Package\Tools\Services\Boot\BootReport;
 use Simtabi\Laranail\ArtisanUI\Core\Exceptions\CommandRunFailed;
@@ -100,7 +101,7 @@ it('never shows exception detail, reports it with its cause, and records the run
     $response = runCommand('lau-fixture:throw')->assertOk()->assertJson(['status' => 'errored', 'success' => false]);
 
     expect($response->json('error'))->toContain($response->json('run_id'))
-        ->not->toContain('redaction-canary-not-a-secret')
+        ->not->toContain(TestCredentials::secret('canary'))
         ->not->toContain('internal detail');
 
     Exceptions::assertReported(static fn (CommandRunFailed $e): bool => $e->command === 'lau-fixture:throw'

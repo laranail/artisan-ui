@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Exceptions;
 use Simtabi\Laranail\ArtisanUI\Enums\RunStatus;
 use Simtabi\Laranail\ArtisanUI\Core\Audit\CommandRun;
+use Simtabi\Laranail\Package\Tools\Testing\TestCredentials;
 use Simtabi\Laranail\Package\Tools\Services\Boot\BootReport;
 use Simtabi\Laranail\Package\Tools\Exceptions\PackageBootException;
 
@@ -68,7 +69,7 @@ it('records a row per run with the database driver, masking secret input', funct
     $id = $this->withSession(['auth.password_confirmed_at' => time()])
         ->postJson(route('laranail-artisan-ui.execute', 'lau-fixture:wipe'), [
             'confirm' => 'lau-fixture:wipe',
-            'options' => ['password' => 'redaction-canary-not-a-secret'],
+            'options' => ['password' => TestCredentials::secret('canary')],
         ])->assertOk()->json('run_id');
 
     $run = CommandRun::query()->findOrFail($id);

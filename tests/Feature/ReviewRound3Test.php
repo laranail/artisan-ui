@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Password;
 use Simtabi\Laranail\ArtisanUI\Enums\RunStatus;
 use Simtabi\Laranail\ArtisanUI\Core\Audit\CommandRun;
 use Simtabi\Laranail\ArtisanUI\Core\Output\SecretRedactor;
+use Simtabi\Laranail\Package\Tools\Testing\TestCredentials;
 use Simtabi\Laranail\ArtisanUI\Core\Events\CommandExecuting;
 use Simtabi\Laranail\ArtisanUI\Core\Discovery\CommandRegistry;
 use Simtabi\Laranail\ArtisanUI\Core\Execution\CommandExecutor;
@@ -45,9 +46,9 @@ it('does not treat stock Laravel config as secrets (cache key, facade aliases)',
 });
 
 it('still masks real credentials that live only in config', function (): void {
-    config()->set('database.connections.reporting.password', 'reporting-db-pass');
+    config()->set('database.connections.reporting.password', TestCredentials::secret('reporting'));
 
-    expect(app(SecretRedactor::class)->scrub('pw reporting-db-pass'))->not->toContain('reporting-db-pass');
+    expect(app(SecretRedactor::class)->scrub('pw ' . TestCredentials::secret('reporting')))->not->toContain(TestCredentials::secret('reporting'));
 });
 
 it('does not mask a word that merely starts like a secret when output is truncated', function (): void {

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Simtabi\Laranail\ArtisanUI\Core\Output\SecretRedactor;
+use Simtabi\Laranail\Package\Tools\Testing\TestCredentials;
 use Simtabi\Laranail\ArtisanUI\Core\Support\ArtisanUIConfig;
 
 beforeEach(function (): void {
@@ -26,14 +27,14 @@ it('does not scrub values shorter than the minimum, so "abc" is not blanked ever
 });
 
 it('masks NAME=value lines whose name looks secret', function (): void {
-    $out = app(SecretRedactor::class)->scrub("APP_NAME=Laravel\nDB_PASSWORD=redaction-canary-not-a-secret\nexport STRIPE_SECRET: sk_x");
+    $out = app(SecretRedactor::class)->scrub("APP_NAME=Laravel\nDB_PASSWORD=" . TestCredentials::secret('canary') . "\nexport STRIPE_SECRET: sk_x");
 
     expect($out)->toBe("APP_NAME=Laravel\nDB_PASSWORD=••••••••\nexport STRIPE_SECRET: ••••••••");
 });
 
 it('masks the password in credentialed URLs', function (): void {
     // Built at run time so no credentialed URL literal sits in the source.
-    $password = 'redaction-canary-not-a-secret';
+    $password = TestCredentials::secret('canary');
     $mask = '••••••••';
 
     expect(app(SecretRedactor::class)->scrub('redis://default:' . $password . '@cache:6379'))
@@ -43,7 +44,7 @@ it('masks the password in credentialed URLs', function (): void {
 it('masks recorded input by key, and leaves flags alone', function (): void {
     $input = app(SecretRedactor::class)->redactInput([
         'arguments' => ['name' => 'users'],
-        'options'   => ['password' => 'redaction-canary-not-a-secret', 'api-token' => 'x', 'force' => true],
+        'options'   => ['password' => TestCredentials::secret('canary'), 'api-token' => 'x', 'force' => true],
     ]);
 
     expect($input)->toBe([

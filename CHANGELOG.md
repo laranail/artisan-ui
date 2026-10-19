@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Test credentials are generated at run time with `TestCredentials` instead of being written into
+  the tests, and `tests/Arch/NoLiteralCredentialsTest.php` fails the suite on any literal
+  credential left behind, so secret scanning has nothing to report. A second test there keeps
+  every generated credential's purpose a single plain word, because secret scanning reads a
+  compound purpose as the password itself. The `laranail/package-tools` floor is now `^0.1.10`,
+  the first release shipping that check.
+
 - The Caches quick-action group gains `clear-compiled`, and a new Tidy group pre-fills tidy's
   regenerable actions (`cache`, `logs --days=7`, `temp`), each with a dry-run twin and none for
   `storage` or `db`. Together they replace toolkit's unauthenticated `GET` maintenance routes,

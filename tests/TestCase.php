@@ -6,6 +6,7 @@ namespace Simtabi\Laranail\ArtisanUI\Tests;
 
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Hash;
+use Simtabi\Laranail\Package\Tools\Testing\TestCredentials;
 use Simtabi\Laranail\Package\Tools\Testing\IsolatedTestCase;
 use Simtabi\Laranail\ArtisanUI\Providers\ArtisanUIServiceProvider;
 use Simtabi\Laranail\ArtisanUI\Tests\Fixtures\FixtureServiceProvider;
@@ -20,7 +21,13 @@ use Simtabi\Laranail\Package\Tools\Providers\PackageToolsServiceProvider;
  */
 abstract class TestCase extends IsolatedTestCase
 {
-    public const string PASSWORD = 'correct-horse-battery-staple';
+    /**
+     * The operator's password, generated per run so no credential sits in the source.
+     */
+    public static function password(): string
+    {
+        return TestCredentials::password('operator');
+    }
 
     /** @return list<class-string> */
     protected function getPackageProviders($app): array
@@ -54,7 +61,7 @@ abstract class TestCase extends IsolatedTestCase
         $user->forceFill([
             'name'     => 'Operator',
             'email'    => $email,
-            'password' => Hash::make(self::PASSWORD),
+            'password' => Hash::make(self::password()),
         ])->save();
 
         return $user;
