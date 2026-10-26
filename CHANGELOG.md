@@ -39,6 +39,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   new. `tests/Unit/DeclaredRequirementsTest.php` now fails when `src/` uses an Illuminate component,
   facade or global helper that `require` does not name.
 
+### Fixed
+
+- **Windows CI installs the current PHP patch.** setup-php reused the PHP the Windows image
+  ships (8.5.11) after 8.5.12 fixed a security issue, so `roave/security-advisories` refused
+  to install and the Windows leg failed on every pull request. The cross-platform job now
+  sets setup-php's `update` (an environment variable) off Linux, so it upgrades to the latest patch.
+
 ## [0.1.0] - 2026-09-26
 
 First release. It adopts [`lorisleiva/artisan-ui`](https://github.com/lorisleiva/artisan-ui) (last commit 2021-06, Laravel 8 only) into the laranail family on Laravel 13 and PHP 8.4/8.5. It folds in every upstream issue and pull request, and the features of [`pabloleone/artisan-ui`](https://github.com/pabloleone/artisan-ui) and [`dev-arindam-roy/artisan-ui`](https://github.com/dev-arindam-roy/artisan-ui), on an authorization model none of the three had.
