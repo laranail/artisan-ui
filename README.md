@@ -93,4 +93,4 @@ Issues and PRs are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). Report vulne
 
 ## License
 
-MIT © Simtabi LLC, retaining the notices of the three projects it derives from. See [LICENSE](LICENSE).
+MIT © Simtabi LLC, retaining the notices of the three projects it derives from. See [LICENSE](LICENSE) and [attribution.md](attribution.md).

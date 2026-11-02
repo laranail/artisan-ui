@@ -34,7 +34,7 @@ it('groups by namespace, putting a bare command with its namespace', function ()
 
     expect($groups)->toHaveKey('lau-fixture')
         ->and(array_map(static fn (CommandDefinition $c): string => $c->name, $groups['migrate']))->toContain('migrate', 'migrate:fresh')
-        ->and(array_map(static fn ($c) => $c->name, $groups[''] ?? []))->not->toContain('migrate');
+        ->and(array_map(static fn (CommandDefinition $c): string => $c->name, $groups[''] ?? []))->not->toContain('migrate');
 });
 
 it('renders the arguments panel open only when an argument is required (upstream PR #2, fixed)', function (): void {

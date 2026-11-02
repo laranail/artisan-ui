@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `LICENSE` is the plain MIT text with every copyright line, so GitHub and Packagist detect it as MIT; the attribution prose moved to `attribution.md`.
 - Test credentials are generated at run time with `TestCredentials` instead of being written into
   the tests, and `tests/Arch/NoLiteralCredentialsTest.php` fails the suite on any literal
   credential left behind, so secret scanning has nothing to report. A second test there keeps

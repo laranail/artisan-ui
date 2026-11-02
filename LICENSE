@@ -1,19 +1,9 @@
 MIT License
 
 Copyright (c) 2026 Simtabi LLC
-
-This package is derived from, and incorporates ideas and code from, three
-MIT-licensed projects. Their copyright notices are retained below, as their
-licence requires.
-
-    Copyright (c) Loris Leiva <loris.leiva@gmail.com>
-        lorisleiva/artisan-ui, https://github.com/lorisleiva/artisan-ui
-
-    Copyright (c) Pablo Leone
-        pabloleone/artisan-ui, https://github.com/pabloleone/artisan-ui
-
-    Copyright (c) 2023 dev-arindam-roy
-        dev-arindam-roy/artisan-ui, https://github.com/dev-arindam-roy/artisan-ui
+Copyright (c) Loris Leiva <loris.leiva@gmail.com>
+Copyright (c) Pablo Leone
+Copyright (c) 2023 dev-arindam-roy
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
