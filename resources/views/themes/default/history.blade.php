@@ -4,6 +4,7 @@
     /** @var \Illuminate\Pagination\LengthAwarePaginator<int, \Simtabi\Laranail\ArtisanUI\Core\Audit\CommandRun> $runs */
     /** @var \Simtabi\Laranail\ArtisanUI\Core\Output\AnsiFormatter $ansi */
     /** @var list<\Simtabi\Laranail\ArtisanUI\Enums\RunStatus> $statuses */
+    /** @var bool $mine */
 @endphp
 
 @php
@@ -28,6 +29,10 @@
                 @endforeach
             </select>
         </div>
+        <label class="flex items-center gap-2 py-1.5 text-sm">
+            <input type="checkbox" name="mine" value="1" @checked($mine) class="rounded border-zinc-300 dark:border-zinc-700">
+            {{ __('laranail/artisan-ui::messages.history_mine') }}
+        </label>
         <button type="submit" class="rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700">{{ __('laranail/artisan-ui::messages.history_filter') }}</button>
     </form>
 
@@ -47,7 +52,7 @@
                                 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' => $run->status === \Simtabi\Laranail\ArtisanUI\Enums\RunStatus::Errored,
                                 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' => $run->status === \Simtabi\Laranail\ArtisanUI\Enums\RunStatus::Running,
                             ])>{{ $run->status->label() }}</span>
-                            <span class="text-zinc-500 dark:text-zinc-400"><span class="sr-only">{{ __('laranail/artisan-ui::messages.history_user') }}: </span>{{ $run->user_id ?? __('laranail/artisan-ui::messages.history_nobody') }}</span>
+                            <span class="text-zinc-500 dark:text-zinc-400"><span class="sr-only">{{ __('laranail/artisan-ui::messages.history_user') }}: </span>@if ($run->user_id !== null && $run->user_type !== null){{ class_basename($run->user_type) }} @endif{{ $run->user_id ?? __('laranail/artisan-ui::messages.history_nobody') }}</span>
                             <time class="text-zinc-500 dark:text-zinc-400" datetime="{{ $run->created_at?->toIso8601String() }}">{{ $run->created_at?->diffForHumans() }}</time>
                             @if ($run->duration_ms !== null)
                                 <span class="text-zinc-500 dark:text-zinc-400">{{ __('laranail/artisan-ui::messages.duration', ['ms' => $run->duration_ms]) }}</span>

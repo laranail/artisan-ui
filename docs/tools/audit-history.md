@@ -100,6 +100,8 @@ The application's scheduler still has to be running. To schedule it yourself, se
 
 The home screen links to it only when both conditions hold.
 
+History lists every recorded run to whoever has `view-history`, newest first, and names each run's user by type and id. **Only my runs** narrows it to the viewer's own (`?mine=1`), alongside the command and status filters. To keep some operators from seeing others' runs at all, give them no `view-history` ability; it is not checked per run.
+
 A failed run's exception message (scrubbed, at most 2,000 characters) is server detail, hosts and paths included, so History shows it only to holders of the `view-environment` ability; everyone else sees the run id to quote, as the live run response does.
 
 ## Rerun

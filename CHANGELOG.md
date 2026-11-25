@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- History has an **Only my runs** filter (`?mine=1`), and names each run's user by type as well as
+  id, since an id alone is ambiguous across user models. The default is still every run.
+
 - `laranail::artisan-ui.tidy`, moved from `laranail/toolkit` (`laranail::toolkit.tidy`, removed
   there in laranail/toolkit#43, which its current `v0.1.0` includes). Path-confined maintenance: `cache`, `logs`, `temp`, `storage`, `db` and `all`,
   with `--days`, `--size`, `--seed`, `--optimize`, `--dry-run`, `--unfiltered` and `--force`.

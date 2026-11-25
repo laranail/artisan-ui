@@ -80,6 +80,7 @@ return [
     'history_status'  => 'Status',
     'history_user'    => 'User',
     'history_nobody'  => 'unknown user',
+    'history_mine'    => 'Only my runs',
 
     // Field errors from Core\Validation\InputValidator.
     'validation' => [
