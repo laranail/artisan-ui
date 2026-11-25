@@ -45,6 +45,8 @@ composer serve
 - `Core` never uses the HTTP layer; the architecture tests enforce the boundary.
 - Failures follow the family's failure-handling standard: classify each one as critical or degradable, report through the exception handler, never branch on the environment, never show internal detail to users.
 - Anything touching authorization, the command policy, risk classification or the execute endpoint needs a test that fails without the change. Say which one in the pull request.
+- Package classes take the framework's contracts, not `config()`, `app()` or facades; `tests/Arch/NoFacadeCallsTest.php` fails otherwise. Mark a call that cannot be injected (an Eloquent model) with `@facade-call-exempt` and a reason.
+- Read a gate's exit code, not its output. A wrapper that pipes a tool through `grep` reports `grep`'s status, which is how two PHPStan errors once got past a "clean" check.
 
 ## Pull requests
 

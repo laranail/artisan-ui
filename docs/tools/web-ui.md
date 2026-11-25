@@ -18,7 +18,7 @@ All panel routes are prefixed with `path` (default `artisan`), bound to `domain`
 
 `{command}` accepts `[A-Za-z0-9:_.-]+`. While `enabled` is false no route is registered. A route cache built while the panel was enabled still carries them, which is why the access middleware checks `enabled` again on every request and answers the framework's plain `404`, never the panel's own page, so a disabled panel is indistinguishable from none.
 
-The asset route has no auth, deliberately: the files are the same public bundle for everyone, and the `403` page needs its styling too. It accepts exactly two filenames.
+The asset route asks for no sign-in, deliberately: the files are the same bundle for everyone, and the `403` page a signed-out or refused user sees needs its styling too. The environment and network allowlists do apply: outside `environments` or `allowed_ips` it answers a bare `404`, so the bundle cannot confirm the panel is there, and the `403` page shown there renders unstyled. It accepts exactly two filenames.
 
 A refused browser request gets the panel's own denial page (`themes/<theme>/denied.blade.php`), not the framework's error view. The framework views style themselves inline, which the panel's CSP refuses, and the CSP applies to denials too. The page shows the status and a generic sentence, never the reason. JSON clients get the bare status.
 
@@ -29,7 +29,7 @@ A refused browser request gets the panel's own denial page (`themes/<theme>/deni
 | Home | `home` | Commands grouped by namespace in collapsible groups, with a risk badge on every command that is not safe; a search box over name and description; the Quick actions sidebar; the environment panel (with `view-environment`); a History link (with the database driver and `view-history`). |
 | Command | `command` | Name, risk badge, description; usage (synopsis and help); the Arguments and Options sections; a risk notice; for destructive commands, the typed-confirmation field; **Run**; the output panel; the password dialog. |
 | History | `history` | Filter by command and status; runs newest first, each expandable to run id, error and output; **Rerun**. |
-| Layout | `layout` | Header, navigation (History appears on every page when the database driver is on and `view-history` allows it), environment name, dark-mode toggle, and the asset tags. |
+| Layout | `layout` | Header, navigation (History appears on every page when the database driver is on and `view-history` allows it), environment name (for `view-environment` holders), dark-mode toggle, and the asset tags. |
 | Denied | `denied` | The status and a generic sentence, never the reason. Standalone: no layout and no script. Rendered for browser denials; JSON clients get the bare status. |
 
 Two partials, `partials.field` (one argument or option) and `partials.risk-badge`, complete the set.

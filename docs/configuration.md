@@ -19,7 +19,7 @@ That writes `config/laranail/artisan-ui.php`. Every read goes through `Simtabi\L
 | `enabled` | `false` | `LARANAIL_ARTISAN_UI_ENABLED` | Master switch. While false the routes are not registered, and a stale cached route answers `404`. Only a literal `true` enables. |
 | `domain` | `null` | `LARANAIL_ARTISAN_UI_DOMAIN` | Host the routes are bound to. `null` means any host. |
 | `path` | `'artisan'` | `LARANAIL_ARTISAN_UI_PATH` | URL prefix. Slashes are trimmed; an empty value falls back to `artisan`. |
-| `middleware` | `['web']` | | Middleware applied **before** the package's own. `SecurityHeaders` and `EnsureArtisanUIAccess` are always appended, so removing entries here cannot remove them. Keep `web` (or a group containing it): the panel needs a session and CSRF. |
+| `middleware` | `['web']` | | Middleware applied **before** the package's own. `SecurityHeaders` and `EnsureArtisanUIAccess` are always appended, so removing entries here cannot remove them. Keep `web` (or a group containing it): the panel needs a session and CSRF, which are **not** appended. Doctor's "CSRF protection" check fails without them. |
 | `guard` | `null` | `LARANAIL_ARTISAN_UI_GUARD` | Auth guard whose user is checked. `null` uses the application default. Must be a session guard; doctor warns otherwise. |
 | `environments` | `['local']` | | Environments the panel answers in, checked independently of the Gate. `['*']` allows every environment. An empty list allows none. Doctor **fails** when `production` or `*` is listed. |
 | `allowed_ips` | `[]` | | Optional allowlist of addresses and CIDR ranges, IPv4 and IPv6. Empty allows any address. A malformed entry denies everyone rather than opening the panel. |
