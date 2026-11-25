@@ -6,7 +6,7 @@ namespace Simtabi\Laranail\ArtisanUI\Modules\WebUI\Support;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Date;
+use Illuminate\Support\DateFactory;
 use Simtabi\Laranail\ArtisanUI\Core\Support\ArtisanUIConfig;
 use Simtabi\Laranail\ArtisanUI\Core\Discovery\CommandDefinition;
 use Simtabi\Laranail\Package\Tools\Support\Resilience\FailurePolicy;
@@ -25,6 +25,9 @@ final readonly class DestructiveConfirmation
 
     public function __construct(
         private ArtisanUIConfig $config,
+        // The factory behind the Date facade, so Date::setTestNow() and a custom date class
+        // still apply.
+        private DateFactory $date,
     ) {}
 
     /** Null when the run may go ahead, otherwise the response refusing it. */
@@ -63,11 +66,11 @@ final readonly class DestructiveConfirmation
         $confirmedAt = $request->session()->get(self::SESSION_KEY);
 
         return is_numeric($confirmedAt)
-            && Date::now()->getTimestamp() - (int) $confirmedAt < $this->config->passwordTimeout();
+            && $this->date->now()->getTimestamp() - (int) $confirmedAt < $this->config->passwordTimeout();
     }
 
     public function markConfirmed(Request $request): void
     {
-        $request->session()->put(self::SESSION_KEY, Date::now()->getTimestamp());
+        $request->session()->put(self::SESSION_KEY, $this->date->now()->getTimestamp());
     }
 }

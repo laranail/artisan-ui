@@ -7,6 +7,7 @@ namespace Simtabi\Laranail\ArtisanUI\Modules\WebUI\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Contracts\Config\Repository as Config;
 
 /**
  * Response headers for a page that can run commands on the server.
@@ -17,8 +18,12 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * Applied to denials as well as to the panel, so a 403 is covered too.
  */
-final class SecurityHeaders
+final readonly class SecurityHeaders
 {
+    public function __construct(
+        private Config $config,
+    ) {}
+
     public function handle(Request $request, Closure $next): Response
     {
         /** @var Response $response */
@@ -52,7 +57,7 @@ final class SecurityHeaders
      */
     private function assetOrigin(Request $request): string
     {
-        $assetUrl = config('app.asset_url');
+        $assetUrl = $this->config->get('app.asset_url');
 
         if (! is_string($assetUrl) || $assetUrl === '') {
             return '';

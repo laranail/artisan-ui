@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Package classes take the framework's contracts instead of `config()` and the `Date` facade
+  (`SecurityHeaders`, `CsrfTokenController`, `DestructiveConfirmation`), and
+  `tests/Arch/NoFacadeCallsTest.php` keeps it that way with package-tools' `assertNoFacadeCallsIn()`
+  and a floor of 75 files. The run model's two `app()` calls are marked exempt: Eloquent builds
+  models without the container. No behaviour changes.
+
 - **Behaviour change:** a `tidy` run with `--dry-run` no longer asks for the typed name and a password,
   because it deletes nothing; tidy's Preview quick actions now run in one click. Every other tidy run
   still confirms, and no other command's `--dry-run` is trusted. `RiskClassifier::classifyRun()` is the
