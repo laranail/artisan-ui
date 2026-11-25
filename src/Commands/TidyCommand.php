@@ -13,6 +13,7 @@ use RecursiveDirectoryIterator;
 use Illuminate\Console\ConfirmableTrait;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Simtabi\Laranail\Console\Tools\Commands\Command;
+use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Simtabi\Laranail\ArtisanUI\Commands\Concerns\FilePathGuard;
 use Simtabi\Laranail\Console\Tools\Commands\Concerns\SupportsNamespacedNames;
 
@@ -93,6 +94,11 @@ final class TidyCommand extends Command
     private int $filesProcessed = 0;
 
     private int $spaceFreed = 0;
+
+    private int $auditLogsKept = 0;
+
+    /** @var list<array{dir: string, name: string, ext: string}>|null */
+    private ?array $auditLogTargets = null;
 
     public function __construct(
         private readonly Cache $cache,
@@ -204,6 +210,7 @@ final class TidyCommand extends Command
     {
         $this->filesProcessed = 0;
         $this->spaceFreed = 0;
+        $this->auditLogsKept = 0;
 
         $base = realpath(storage_path());
 
@@ -234,6 +241,10 @@ final class TidyCommand extends Command
             }
 
             $this->sweep($base, $relative);
+        }
+
+        if ($this->auditLogsKept > 0) {
+            $this->consoleWriter()->line(sprintf('Kept %d audit log file(s): the panel records its runs there.', $this->auditLogsKept));
         }
 
         $verb = $this->isDryRun() ? 'Would free' : 'Freed';
@@ -296,6 +307,12 @@ final class TidyCommand extends Command
             }
 
             if (str_ends_with($file->getFilename(), '.gitignore')) {
+                continue;
+            }
+
+            if ($this->isAuditLogFile($real)) {
+                $this->auditLogsKept++;
+
                 continue;
             }
 
@@ -555,6 +572,96 @@ final class TidyCommand extends Command
         }
 
         return true;
+    }
+
+    /**
+     * Whether a file is one the panel's audit trail is written to (AUI-07).
+     *
+     * The `log` audit driver writes to a log channel, the default one unless configured, and the
+     * `database` driver falls back to it when its table is gone. That channel is usually a file
+     * under storage/logs, so `tidy logs` (and the "Delete old logs" quick action) erased the record
+     * of who ran what. The files are kept: a `single` channel's path, a `daily` channel's
+     * `name-YYYY-MM-DD.ext` rotations, and either behind a `stack`.
+     */
+    private function isAuditLogFile(string $real): bool
+    {
+        $this->auditLogTargets ??= $this->resolveAuditLogTargets();
+
+        foreach ($this->auditLogTargets as $target) {
+            if (dirname($real) !== $target['dir']) {
+                continue;
+            }
+
+            $basename = basename($real);
+            $suffix = $target['ext'] === '' ? '' : '.' . $target['ext'];
+
+            if ($basename === $target['name'] . $suffix
+                || preg_match('/^' . preg_quote($target['name'], '/') . '-\d{4}-\d{2}-\d{2}' . preg_quote($suffix, '/') . '$/', $basename) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<array{dir: string, name: string, ext: string}>
+     */
+    private function resolveAuditLogTargets(): array
+    {
+        $config = $this->getLaravel()->make(ConfigRepository::class);
+
+        if ($config->get('laranail.artisan-ui.audit.driver') === 'none') {
+            return [];
+        }
+
+        $channel = $config->get('laranail.artisan-ui.audit.channel') ?? $config->get('logging.default');
+        $targets = [];
+        $pending = is_string($channel) ? [$channel] : [];
+        $seen = [];
+
+        while ($pending !== []) {
+            $name = array_shift($pending);
+
+            if (isset($seen[$name])) {
+                continue;
+            }
+
+            $seen[$name] = true;
+            $settings = $config->get("logging.channels.{$name}");
+
+            if (! is_array($settings)) {
+                continue;
+            }
+
+            if (($settings['driver'] ?? null) === 'stack') {
+                foreach ((array) ($settings['channels'] ?? []) as $child) {
+                    if (is_string($child)) {
+                        $pending[] = $child;
+                    }
+                }
+
+                continue;
+            }
+
+            $path = $settings['path'] ?? null;
+
+            if (! is_string($path) || $path === '') {
+                continue;
+            }
+
+            $dir = realpath(dirname($path));
+
+            if ($dir !== false) {
+                $targets[] = [
+                    'dir'  => $dir,
+                    'name' => pathinfo($path, PATHINFO_FILENAME),
+                    'ext'  => pathinfo($path, PATHINFO_EXTENSION),
+                ];
+            }
+        }
+
+        return $targets;
     }
 
     /**

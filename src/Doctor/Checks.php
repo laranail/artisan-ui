@@ -10,6 +10,7 @@ use ReflectionProperty;
 use Illuminate\Support\Str;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Cache\LockProvider;
+use Illuminate\Contracts\Cache\CanFlushLocks;
 use Illuminate\Contracts\Container\Container;
 use Simtabi\Laranail\ArtisanUI\Enums\Ability;
 use Simtabi\Laranail\ArtisanUI\Enums\AssetMode;
@@ -233,9 +234,24 @@ final readonly class Checks
             );
         }
 
-        return $repository->getStore() instanceof LockProvider
-            ? DoctorResult::pass('The cache store is reachable and supports locks.')
-            : DoctorResult::warn('The cache store cannot lock, so the same command can run twice at once.');
+        $store = $repository->getStore();
+
+        if (! $store instanceof LockProvider) {
+            return DoctorResult::warn('The cache store cannot lock, so the same command can run twice at once.');
+        }
+
+        // cache:clear, optimize:clear and the tidy cache, temp and all actions flush the store. A
+        // store whose locks live in its data loses them too, so a Safe command can drop a running
+        // destructive command's lock and let a second one start alongside it (AUI-06).
+        if (! $store instanceof CanFlushLocks || ! $store->hasSeparateLockStore()) {
+            return DoctorResult::warn(
+                'Run locks share the cache data that cache:clear, optimize:clear and tidy flush, so clearing the cache '
+                . 'mid-run can let a second destructive command start. Keep locks apart: `lock_connection` (redis), '
+                . '`lock_table` (database) or `lock_path` (file) on the store.',
+            );
+        }
+
+        return DoctorResult::pass('The cache store is reachable, supports locks and keeps them apart from its data.');
     }
 
     private function assets(): DoctorResult

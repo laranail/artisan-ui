@@ -27,6 +27,8 @@ Two lines on `audit.channel` (or the default channel):
 
 Output is not logged, only its size. If the log channel itself fails, the write falls back to PHP's `error_log()`.
 
+`laranail::artisan-ui.tidy logs` (and its "Delete old logs" quick action) leaves the audit channel's file alone, so the panel cannot be used to erase its own record. Anything else that rotates or deletes logs, a host's logrotate included, still can: give `audit.channel` its own file with the retention you need.
+
 ## The database driver
 
 Publish and run the migration (the install command offers to):

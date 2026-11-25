@@ -49,6 +49,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `tidy logs` and `tidy all` no longer delete the file the panel's audit trail is written to (the
+  `log` driver's channel, which the `database` driver also falls back to), so a panel user can no
+  longer erase the record of who ran what with one click. The summary says how many files it kept.
+- Doctor's "Run locks" check now warns when the cache store keeps its locks in the data that
+  `cache:clear`, `optimize:clear` and tidy flush, which let a Safe command drop a running
+  destructive command's lock. The fix is the store's own `lock_connection`, `lock_table` or
+  `lock_path`; see `docs/tools/execution.md`.
+
 - A finished run no longer stays in memory for the life of a long-lived worker. Its shutdown guard
   kept its callback, and with it the executor, the run's unredacted input and its lock, because PHP
   holds every registered shutdown function until the process exits. The guard now drops the

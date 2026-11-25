@@ -6,6 +6,7 @@ use Illuminate\Cache\ArrayLock;
 use Illuminate\Console\Command;
 use Illuminate\Cache\ArrayStore;
 use Illuminate\Cache\Repository;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Contracts\Console\Kernel;
 use Simtabi\Laranail\ArtisanUI\Enums\RunStatus;
 use Simtabi\Laranail\ArtisanUI\Core\Audit\CommandRun;
@@ -19,6 +20,10 @@ use Simtabi\Laranail\ArtisanUI\Core\Discovery\ArgumentDefinition;
 /*
  * Regressions from the 2026-11-25 audit (design folder run-2026-11-25/FINDINGS.md).
  */
+
+afterEach(function (): void {
+    tidyCleanUp();
+});
 
 // AUI-04: the shutdown function keeps every guard for the life of the worker. A guard that kept
 // its closure kept the executor, the run's unredacted input and its lock with it, run after run.
@@ -159,4 +164,84 @@ it('never lists the application command argument, even after the command has run
 
     expect($command->getDefinition()->hasArgument('command'))->toBeTrue('the precondition: Symfony merged it in')
         ->and(array_map(static fn (ArgumentDefinition $argument): string => $argument->name, $definition->arguments))->not->toContain('command');
+});
+
+// AUI-07: the `log` audit driver writes to the default channel, which is a file under
+// storage/logs; `tidy logs` and the "Delete old logs" quick action deleted it with the rest.
+it('keeps the file the audit trail is written to when tidying logs', function (string $driver, string $channel): void {
+    config()->set('laranail.artisan-ui.audit.driver', 'log');
+    config()->set('logging.default', 'null');
+    config()->set('laranail.artisan-ui.audit.channel', 'audit');
+    config()->set('logging.channels.audit', ['driver' => $driver, 'path' => storage_path('logs/artisan-audit.log')]);
+
+    $audit = tidyStorageFile($channel, 'run started');
+    $other = tidyStorageFile('logs/worker.log', 'noise');
+
+    $this->artisan('laranail::artisan-ui.tidy', ['action' => 'logs', '--force' => true])
+        ->expectsOutputToContain('audit log')
+        ->assertExitCode(0);
+
+    expect($audit)->toBeFile('the audit trail was deleted')
+        ->and($other)->not->toBeFile();
+})->with([
+    'single channel' => ['single', 'logs/artisan-audit.log'],
+    'daily channel'  => ['daily', 'logs/artisan-audit-2026-11-25.log'],
+]);
+
+it('follows a stack channel to the file behind it', function (): void {
+    config()->set('laranail.artisan-ui.audit.driver', 'log');
+    config()->set('laranail.artisan-ui.audit.channel');
+    config()->set('logging.default', 'stack');
+    config()->set('logging.channels.stack', ['driver' => 'stack', 'channels' => ['file']]);
+    config()->set('logging.channels.file', ['driver' => 'single', 'path' => storage_path('logs/app.log')]);
+
+    $audit = tidyStorageFile('logs/app.log', 'run started');
+
+    $this->artisan('laranail::artisan-ui.tidy', ['action' => 'logs', '--force' => true])->assertExitCode(0);
+
+    expect($audit)->toBeFile();
+});
+
+it('sweeps every log when nothing is audited', function (): void {
+    config()->set('laranail.artisan-ui.audit.driver', 'none');
+    config()->set('logging.default', 'null');
+    config()->set('logging.channels.file', ['driver' => 'single', 'path' => storage_path('logs/app.log')]);
+    config()->set('laranail.artisan-ui.audit.channel', 'file');
+
+    $log = tidyStorageFile('logs/app.log', 'noise');
+
+    $this->artisan('laranail::artisan-ui.tidy', ['action' => 'logs', '--force' => true])->assertExitCode(0);
+
+    expect($log)->not->toBeFile();
+});
+
+// AUI-06: run locks live in the cache store, and cache:clear, optimize:clear and the tidy cache,
+// temp and all actions flush it. Unless the store keeps its locks apart, a Safe command can drop
+// a running destructive command's lock and let a second one start alongside it.
+function doctorCheck(string $name): array
+{
+    Artisan::call('laranail::artisan-ui.doctor', ['--json' => true]);
+
+    return collect(json_decode(Artisan::output(), true)['checks'])->firstWhere('name', $name);
+}
+
+it('warns when run locks share the cache data cache:clear flushes', function (): void {
+    config()->set('cache.default', 'file');
+    config()->set('cache.stores.file', ['driver' => 'file', 'path' => storage_path('framework/cache/data')]);
+
+    $check = doctorCheck('Run locks');
+
+    expect($check['status'])->toBe('warn')
+        ->and($check['message'])->toContain('cache:clear');
+});
+
+it('passes when the cache store keeps its locks apart', function (): void {
+    config()->set('cache.default', 'file');
+    config()->set('cache.stores.file', [
+        'driver'    => 'file',
+        'path'      => storage_path('framework/cache/data'),
+        'lock_path' => storage_path('framework/cache/locks'),
+    ]);
+
+    expect(doctorCheck('Run locks')['status'])->toBe('pass');
 });

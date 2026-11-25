@@ -24,7 +24,7 @@ php artisan laranail::artisan-ui.tidy [action] [options]
 | Action | What it does | Roots under `storage_path()` |
 |---|---|---|
 | `cache` | Flushes the application cache through `cache:clear`; with `--optimize`, also `optimize:clear`. | none |
-| `logs` | Deletes log files, filtered by `--days` and `--size` when given. | `logs` |
+| `logs` | Deletes log files, filtered by `--days` and `--size` when given, except the files the panel's audit trail is written to. | `logs` |
 | `temp` | Deletes temporary files and the file cache's data. | `app/temp`, `app/tmp`, `framework/cache/data` |
 | `storage` | Deletes user files, **only when scoped** (see below). | `app/public`, `app/uploads`, `app/exports` |
 | `db` | Runs `migrate:fresh`, then `db:seed` with `--seed`. **Never part of `all`.** | none |
@@ -54,6 +54,7 @@ Without `--force`, each action asks first. In a non-interactive run (CI, a pipe,
 - **Every deletion is confined to `storage_path()`.** Each root is realpath-resolved and proven to sit inside `realpath(storage_path())`; each candidate file is realpath-resolved and re-checked against its root, so a `..` path or a symlink pointing outside storage is skipped, never followed. Root paths are also screened for `..` segments and null bytes.
 - **`--dry-run` deletes nothing.** It lists each candidate and reports the space that would be freed. On `db` it is a no-op.
 - **`db` is hard-gated.** It needs `--force`, passes Laravel's `confirmToProceed()`, and is excluded from `all`, so a bulk tidy can never drop your tables.
+- **The audit trail is kept.** The `log` audit driver writes to a log channel (the default one unless `audit.channel` is set), and the `database` driver falls back to it, so `logs` and `all` skip that channel's file: a `single` channel's path, a `daily` channel's dated rotations, either behind a `stack`. The summary says how many it kept. With the `none` driver every log is swept.
 - **A filter must filter something.** `--days` and `--size` take a whole number of at least 1.
   `0` means no filter, so `tidy storage --days=0` is refused like an unscoped sweep, and a value that
   is not a whole number (`abc`, `-5`, `1.5`) is rejected before anything runs.
