@@ -49,6 +49,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A wrong password before a destructive command is now logged and dispatches `AccessDenied` with the
+  reason `password`, like every other denial; it was throttled but left no trace. A guard with no user
+  provider gets a clear refusal instead of a fatal 500, and doctor's "Auth guard" check warns about it.
+- The asset route answers a bare `404` outside `environments` and `allowed_ips`, as the panel's other
+  routes give nothing away there; it used to serve the bundle to anyone, which confirmed the panel existed.
+- Doctor gains a "CSRF protection" check that fails when `laranail.artisan-ui.middleware` (or the
+  groups it names) has no CSRF middleware. The config comment no longer implies the package adds it.
+
 - The run form names what happened on a `502`, `503` or `504` (the proxy stopped waiting; the
   command may still be running, so check History before running it again), a lost connection, a
   `429` and a `401`, where it used to say "Something went wrong. Try again.", which invited a second

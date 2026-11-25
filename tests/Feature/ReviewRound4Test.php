@@ -6,11 +6,18 @@ use Illuminate\Cache\ArrayLock;
 use Illuminate\Console\Command;
 use Illuminate\Cache\ArrayStore;
 use Illuminate\Cache\Repository;
+use Illuminate\Auth\GuardHelpers;
+use Illuminate\Contracts\Auth\Guard;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Contracts\Console\Kernel;
 use Simtabi\Laranail\ArtisanUI\Enums\RunStatus;
 use Simtabi\Laranail\ArtisanUI\Core\Audit\CommandRun;
 use Simtabi\Laranail\ArtisanUI\Core\Execution\RunGuard;
+use Simtabi\Laranail\ArtisanUI\Core\Events\AccessDenied;
+use Simtabi\Laranail\Package\Tools\Testing\TestCredentials;
+use Simtabi\Laranail\ArtisanUI\Modules\WebUI\Support\Assets;
 use Simtabi\Laranail\ArtisanUI\Core\Discovery\CommandRegistry;
 use Simtabi\Laranail\ArtisanUI\Core\Execution\CommandExecutor;
 use Simtabi\Laranail\ArtisanUI\Core\Validation\ValidatedInput;
@@ -244,4 +251,85 @@ it('passes when the cache store keeps its locks apart', function (): void {
     ]);
 
     expect(doctorCheck('Run locks')['status'])->toBe('pass');
+});
+
+// AUI-16: the asset route answered 200 to anyone while the panel was enabled, from any address
+// and in any environment, which confirmed the panel was there where every other route says 403.
+it('answers a bare 404 for assets outside the allowed network or environment', function (string $setting, mixed $value): void {
+    config()->set($setting, $value);
+    $file = Assets::SCRIPT;
+
+    $response = $this->get(route('laranail-artisan-ui.asset', ['file' => $file]));
+
+    $response->assertNotFound();
+    expect($response->getContent())->not->toContain('artisan-ui');
+})->with([
+    'outside allowed_ips'  => ['laranail.artisan-ui.allowed_ips', ['10.0.0.0/8']],
+    'outside environments' => ['laranail.artisan-ui.environments', ['staging']],
+]);
+
+// AUI-17: CSRF protection comes only from the configurable `middleware` list. Removing `web`
+// (or listing a group without the CSRF middleware) silently removed it from a panel that runs
+// commands on POST.
+it('fails the doctor when the panel middleware has no CSRF protection', function (): void {
+    config()->set('laranail.artisan-ui.middleware', ['api']);
+
+    $check = doctorCheck('CSRF protection');
+
+    expect($check['status'])->toBe('fail')
+        ->and($check['message'])->toContain('CSRF');
+});
+
+it('passes the CSRF doctor check with the web group', function (): void {
+    expect(doctorCheck('CSRF protection')['status'])->toBe('pass');
+});
+
+// AUI-14: a wrong password before a destructive command was throttled but left no trace, so a
+// guessing attempt was invisible to anyone watching the AccessDenied event or the log.
+it('records a failed password confirmation as an access denial', function (): void {
+    allowEverything();
+    $this->actingAs($this->makeUser());
+    Event::fake([AccessDenied::class]);
+
+    $this->postJson(route('laranail-artisan-ui.confirm-password'), ['password' => TestCredentials::password('wrong')])
+        ->assertStatus(422);
+
+    Event::assertDispatched(
+        AccessDenied::class,
+        static fn ($event): bool => $event->reason === 'password',
+    );
+});
+
+// AUI-15: a guard with no user provider (a custom guard) made the confirmation a fatal 500.
+it('refuses a password confirmation cleanly when the guard has no user provider', function (): void {
+    allowEverything();
+    $this->actingAs($this->makeUser());
+
+    Auth::extend('providerless', static fn ($app, $name, array $config): Guard => new class($app['auth']->guard('web')) implements Guard
+    {
+        use GuardHelpers;
+
+        public function __construct(private Guard $inner) {}
+
+        public function user()
+        {
+            return $this->inner->user();
+        }
+
+        public function validate(array $credentials = [])
+        {
+            return false;
+        }
+
+        public function getProvider(): null
+        {
+            return null;
+        }
+    });
+    config()->set('auth.guards.providerless', ['driver' => 'providerless']);
+    config()->set('laranail.artisan-ui.guard', 'providerless');
+
+    $this->postJson(route('laranail-artisan-ui.confirm-password'), ['password' => TestCredentials::password()])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['password']);
 });

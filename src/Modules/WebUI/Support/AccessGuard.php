@@ -31,36 +31,48 @@ final readonly class AccessGuard
         private ThemeView $views,
     ) {}
 
+    /**
+     * Log a denial and dispatch AccessDenied without answering the request. The password
+     * confirmation records its refusals through this too (AUI-14), so a guessing attempt shows
+     * up wherever other denials do. A disabled panel is not recorded: it is meant to be absent.
+     */
+    public function record(Request $request, Decision $decision, ?string $command = null): void
+    {
+        if ($decision->reason === 'disabled') {
+            return;
+        }
+
+        $userId = $request->user()?->getAuthIdentifier();
+        $userId = is_scalar($userId) ? (string) $userId : null;
+
+        try {
+            $channel = $this->config->logChannel();
+            ($channel === null ? $this->log->driver() : $this->log->channel($channel))
+                ->warning('laranail/artisan-ui: access denied', [
+                    'reason'   => $decision->reason,
+                    'status'   => $decision->status,
+                    'ip'       => $request->ip(),
+                    'path'     => $request->path(),
+                    'user'     => $userId,
+                    'command'  => $command,
+                    'decision' => 'refused',
+                ]);
+        } catch (Throwable $e) {
+            error_log('laranail/artisan-ui: access-denied log write failed: ' . $e->getMessage());
+        }
+
+        $this->events->dispatch(new AccessDenied(
+            (string) $decision->reason,
+            $request->ip(),
+            $request->path(),
+            $userId,
+            $command,
+        ));
+    }
+
     public function deny(Request $request, Decision $decision, ?string $command = null): never
     {
-        if ($decision->reason !== 'disabled') {
-            $userId = $request->user()?->getAuthIdentifier();
-            $userId = is_scalar($userId) ? (string) $userId : null;
-
-            try {
-                $channel = $this->config->logChannel();
-                ($channel === null ? $this->log->driver() : $this->log->channel($channel))
-                    ->warning('laranail/artisan-ui: access denied', [
-                        'reason'   => $decision->reason,
-                        'status'   => $decision->status,
-                        'ip'       => $request->ip(),
-                        'path'     => $request->path(),
-                        'user'     => $userId,
-                        'command'  => $command,
-                        'decision' => 'refused',
-                    ]);
-            } catch (Throwable $e) {
-                error_log('laranail/artisan-ui: access-denied log write failed: ' . $e->getMessage());
-            }
-
-            $this->events->dispatch(new AccessDenied(
-                (string) $decision->reason,
-                $request->ip(),
-                $request->path(),
-                $userId,
-                $command,
-            ));
-        }
+        $this->record($request, $decision, $command);
 
         // JSON clients get the bare status. A browser gets the panel's own page: the framework's
         // default error views style themselves inline, which the panel's CSP (applied to denials

@@ -36,7 +36,9 @@ return [
      * the security headers are always appended by the package, so removing
      * something from this list can never remove them.
      *
-     * The panel needs a session, so keep `web` (or a group containing it).
+     * CSRF protection and the session are NOT appended: they come from this
+     * list. Keep `web` (or a group containing its session and CSRF middleware);
+     * doctor's "CSRF protection" check fails without it.
      */
     'middleware' => ['web'],
 

@@ -9,6 +9,7 @@ use Throwable;
 use ReflectionProperty;
 use Illuminate\Support\Str;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\CanFlushLocks;
 use Illuminate\Contracts\Container\Container;
@@ -16,11 +17,16 @@ use Simtabi\Laranail\ArtisanUI\Enums\Ability;
 use Simtabi\Laranail\ArtisanUI\Enums\AssetMode;
 use Illuminate\Contracts\Foundation\Application;
 use Simtabi\Laranail\ArtisanUI\Enums\AuditDriver;
+use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Simtabi\Laranail\ArtisanUI\Core\Audit\CommandRun;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Simtabi\Laranail\ArtisanUI\Core\Policy\DefaultAbilities;
 use Simtabi\Laranail\ArtisanUI\Core\Support\ArtisanUIConfig;
 use Simtabi\Laranail\ArtisanUI\Modules\WebUI\Support\Assets;
+use Illuminate\Foundation\Http\Kernel as FoundationHttpKernel;
 use Simtabi\Laranail\Package\Tools\Services\Doctor\DoctorCheck;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Simtabi\Laranail\Package\Tools\Services\Doctor\DoctorResult;
 use Simtabi\Laranail\Package\Tools\Services\Doctor\Checks\CallbackCheck;
 use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
@@ -36,6 +42,17 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
  */
 final readonly class Checks
 {
+    /**
+     * The framework's CSRF middleware under each of its names; a subclass counts.
+     *
+     * @var list<string>
+     */
+    private const array CSRF_MIDDLEWARE = [
+        PreventRequestForgery::class,
+        ValidateCsrfToken::class,
+        VerifyCsrfToken::class,
+    ];
+
     public function __construct(
         private Container $container,
     ) {}
@@ -53,6 +70,7 @@ final readonly class Checks
             $this->check('Maintenance mode', 'The panel stays reachable while the application is down.', $this->maintenance(...)),
             $this->check('Audit trail', 'Runs are recorded where the configuration says.', $this->audit(...)),
             $this->check('Audit pruning', 'Old run records are pruned on a schedule.', $this->pruning(...)),
+            $this->check('CSRF protection', 'The panel middleware verifies CSRF tokens on the forms that run commands.', $this->csrf(...)),
             $this->check('Run locks', 'The cache store can lock, so a command cannot run twice at once.', $this->locks(...)),
             $this->check('Assets', 'The panel stylesheet and script are built and reachable.', $this->assets(...)),
             $this->check('Octane', 'Commands run inside a long-lived worker share its state.', $this->octane(...)),
@@ -141,6 +159,12 @@ final readonly class Checks
             return DoctorResult::warn("The guard [{$guard}] uses the [{$driver}] driver. The panel needs a session guard for its forms and password confirmation.");
         }
 
+        $instance = $this->container->make('auth')->guard($guard);
+
+        if (! method_exists($instance, 'getProvider') || ! $instance->getProvider() instanceof UserProvider) {
+            return DoctorResult::warn("The guard [{$guard}] has no user provider, so a password cannot be confirmed and destructive commands are unavailable.");
+        }
+
         return DoctorResult::pass("Authenticating with the [{$guard}] session guard.");
     }
 
@@ -216,6 +240,53 @@ final readonly class Checks
         return DoctorResult::warn(
             'Nothing prunes old runs. Schedule `model:prune --model="' . CommandRun::class . '"`; '
             . 'retention is ' . $this->config()->retentionDays() . ' days.',
+        );
+    }
+
+    /**
+     * The panel's own guards are always appended, but CSRF protection comes from the
+     * configurable `middleware` list (the `web` group, normally). Without it, a page on another
+     * site can submit the forms that run commands in a signed-in operator's browser (AUI-17).
+     */
+    private function csrf(): DoctorResult
+    {
+        // The groups and aliases the HTTP kernel defines reach the router only when a request is
+        // handled, so a console run (doctor) reads both.
+        $router = $this->container->make('router');
+        $kernel = $this->container->make(HttpKernel::class);
+        $groups = [...($kernel instanceof FoundationHttpKernel ? $kernel->getMiddlewareGroups() : []), ...$router->getMiddlewareGroups()];
+        $aliases = [...($kernel instanceof FoundationHttpKernel ? $kernel->getMiddlewareAliases() : []), ...$router->getMiddleware()];
+        $pending = $this->config()->middleware();
+        $seen = [];
+
+        while ($pending !== []) {
+            $entry = array_shift($pending);
+
+            if (! is_string($entry) || isset($seen[$entry])) {
+                continue;
+            }
+
+            $seen[$entry] = true;
+            $name = strstr($entry, ':', true) ?: $entry;
+
+            if (isset($groups[$name])) {
+                array_push($pending, ...$groups[$name]);
+
+                continue;
+            }
+
+            $class = $aliases[$name] ?? $name;
+
+            foreach (self::CSRF_MIDDLEWARE as $csrf) {
+                if (is_string($class) && is_a($class, $csrf, true)) {
+                    return DoctorResult::pass('Tokens are verified by ' . $class . '.');
+                }
+            }
+        }
+
+        return DoctorResult::fail(
+            'No CSRF middleware in laranail.artisan-ui.middleware (or the groups it names), so another site '
+            . 'can submit the run form in a signed-in browser. Keep `web` in the list.',
         );
     }
 
