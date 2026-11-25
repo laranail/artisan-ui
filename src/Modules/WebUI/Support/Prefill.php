@@ -39,6 +39,8 @@ final class Prefill
      *
      * @param array<string, mixed>|null $arguments
      * @param array<string, mixed>|null $options
+     *
+     * @return array<string, string|list<string>>
      */
     public static function fromRun(?array $arguments, ?array $options, CommandDefinition $command, string $mask = ''): array
     {
@@ -69,6 +71,8 @@ final class Prefill
 
     /**
      * @param array{arguments: mixed, options: mixed} $sections
+     *
+     * @return array<string, string|list<string>>
      */
     private static function fromInput(array $sections, CommandDefinition $command, string $mask): array
     {

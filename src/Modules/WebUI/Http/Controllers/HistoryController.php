@@ -46,12 +46,14 @@ final class HistoryController extends WebController
         $status = RunStatus::tryFrom((string) $request->query('status', ''));
         // "Mine": the viewer's own runs, matched on type and id as RunContext records them. The
         // default stays every run the ability allows, as before (AUI-12).
-        $mine = $request->query('mine') === '1' && $request->user() !== null;
-        $userId = $request->user()?->getAuthIdentifier();
+        $viewer = $request->user();
+        $viewerType = $viewer !== null ? $viewer::class : null;
+        $userId = $viewer?->getAuthIdentifier();
+        $mine = $request->query('mine') === '1' && $viewerType !== null;
 
         $runs = CommandRun::query()
             ->when($mine, static fn ($query) => $query
-                ->where('user_type', $request->user()::class)
+                ->where('user_type', $viewerType)
                 ->where('user_id', is_scalar($userId) ? (string) $userId : null))
             ->when(is_string($command) && $command !== '', static fn ($query) => $query->where('command', $command))
             ->when($status instanceof RunStatus, static fn ($query) => $query->where('status', $status?->value))
