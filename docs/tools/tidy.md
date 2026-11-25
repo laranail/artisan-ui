@@ -86,7 +86,7 @@ php artisan laranail::artisan-ui.tidy db --seed --force
 
 ## Lineage
 
-The command moved here from `laranail/toolkit`, where it was `laranail::toolkit.tidy` (`Simtabi\Laranail\Toolkit\Commands\Tidy`). Toolkit removes it in 0.3.0; use `laranail::artisan-ui.tidy` instead. The behaviour is unchanged. Only its collaborators changed: the framework's cache `Repository` and the PSR-3 `LoggerInterface` replace toolkit's own contracts.
+The command moved here from `laranail/toolkit`, where it was `laranail::toolkit.tidy` (`Simtabi\Laranail\Toolkit\Commands\Tidy`). Toolkit removed it in laranail/toolkit#43, which its current `v0.1.0` includes; use `laranail::artisan-ui.tidy` instead. The behaviour is unchanged. Only its collaborators changed: the framework's cache `Repository` and the PSR-3 `LoggerInterface` replace toolkit's own contracts.
 
 Toolkit also shipped seven unauthenticated `GET` routes that ran `tidy all`, `optimize`, `route:cache`, `cache:clear`, `view:clear`, `config:cache` and `clear-compiled`. They were not ported. This package exists to run commands only behind an authenticated, Gate-checked `POST`, so the same capability is the Caches quick-action group, which gained `clear-compiled`, and the Tidy group.
 

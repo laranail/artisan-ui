@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `laranail::artisan-ui.tidy`, moved from `laranail/toolkit` (`laranail::toolkit.tidy`, removed
-  there in 0.3.0). Path-confined maintenance: `cache`, `logs`, `temp`, `storage`, `db` and `all`,
+  there in laranail/toolkit#43, which its current `v0.1.0` includes). Path-confined maintenance: `cache`, `logs`, `temp`, `storage`, `db` and `all`,
   with `--days`, `--size`, `--seed`, `--optimize`, `--dry-run`, `--unfiltered` and `--force`.
   Behaviour is unchanged: every deletion stays inside `storage_path()`, an unscoped sweep of user
   uploads is refused (outright in production), and `db` runs `migrate:fresh` only with `--force`

@@ -41,7 +41,7 @@ use Simtabi\Laranail\Console\Tools\Commands\Concerns\SupportsNamespacedNames;
  * containment; they are also where user uploads live.
  *
  * Moved from `laranail/toolkit`, where it was `laranail::toolkit.tidy`
- * (`Simtabi\Laranail\Toolkit\Commands\Tidy`); toolkit removes it in 0.3.0.
+ * (`Simtabi\Laranail\Toolkit\Commands\Tidy`); toolkit removed it in laranail/toolkit#43.
  * The behaviour is unchanged. Only the collaborators were substituted:
  * toolkit's cache and logger contracts became the framework's cache
  * `Repository` and PSR-3 `LoggerInterface`, and its file service's
