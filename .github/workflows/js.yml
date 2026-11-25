@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  # Weekly on main, so a tool or dependency release that breaks the check shows up here rather
+  # than on an unrelated pull request.
+  schedule:
+    - cron: '29 6 * * 1'
 
 concurrency:
   group: js-${{ github.ref }}
@@ -44,6 +48,9 @@ jobs:
 
       # resources/dist is committed, because consumers install through Composer
       # and never run npm. A drift here is a panel that ships stale behaviour.
+      # With no lockfile, esbuild and tailwindcss resolve fresh, so a new release of either can
+      # change the minified output with no commit here: rebuild locally (`npm run build`) and
+      # commit the result.
       - name: Verify the committed bundle is up to date
         run: git diff --exit-code resources/dist
 
