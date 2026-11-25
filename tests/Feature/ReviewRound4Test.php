@@ -333,3 +333,20 @@ it('refuses a password confirmation cleanly when the guard has no user provider'
         ->assertStatus(422)
         ->assertJsonValidationErrors(['password']);
 });
+
+// AUI-19: with the database driver and no table, the start fell back to the log, and the finish
+// fell back again and logged "run started" a second time, so one run read as two.
+it('logs the start of a run once when the database recorder falls back at both ends', function (): void {
+    config()->set('laranail.artisan-ui.audit.driver', 'database');
+    config()->set('laranail.artisan-ui.audit.channel', 'audit-file');
+    config()->set('logging.channels.audit-file', ['driver' => 'single', 'path' => storage_path('logs/lau-fallback.log')]);
+    @unlink(storage_path('logs/lau-fallback.log'));
+
+    app(CommandExecutor::class)->execute(app(CommandRegistry::class)->find('lau-fixture:echo'), new ValidatedInput(['text' => 'x']));
+
+    $log = (string) file_get_contents(storage_path('logs/lau-fallback.log'));
+    @unlink(storage_path('logs/lau-fallback.log'));
+
+    expect(substr_count($log, 'run started'))->toBe(1)
+        ->and(substr_count($log, 'run finished'))->toBe(1);
+});

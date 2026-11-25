@@ -49,6 +49,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- With the `database` audit driver and no run table, a run's start is logged once, not twice: the
+  finish used to log the start again although it had already fallen back to the log.
+- `docs/tools/execution.md` no longer says the previous time limit is "restored": PHP restarts the
+  timer, so the rest of the request gets the previous limit afresh.
+
 - A wrong password before a destructive command is now logged and dispatches `AccessDenied` with the
   reason `password`, like every other denial; it was throttled but left no trace. A guard with no user
   provider gets a clear refusal instead of a fatal 500, and doctor's "Auth guard" check warns about it.

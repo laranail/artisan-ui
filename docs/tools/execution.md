@@ -46,7 +46,7 @@ $exitCode = $artisan->call($command->name, [...$input->toParameters(), '--no-int
 - **Always `--no-interaction`.** A command that prompts would otherwise block on STDIN, hanging the worker or failing under a web server. With it, a prompt answers its default, and commands that ask for confirmation in production refuse unless `--force` is given, which is the right outcome for a web panel.
 - **By name, through the kernel.** A fresh input every time; no state carries over from a previous run of the same command.
 - **Bounded output.** Output goes to a `CappedOutput` buffer that stops accepting text past `limits.max_output_bytes`, cutting on a character boundary and flagging the result truncated. ANSI colour is kept for the formatter.
-- **Bounded time.** `set_time_limit(limits.time_limit)` for the run; the previous limit is restored afterwards.
+- **Bounded time.** `set_time_limit(limits.time_limit)` for the run, then `set_time_limit()` with the previous value. PHP restarts the timer on every call, so the rest of the request gets the previous limit afresh, not what was left of it; a request that runs a command can therefore take up to `time_limit` plus the usual limit in all.
 - **Never throws.** An exception becomes a result with status `errored`, no exit code, whatever output was written before it, and the exception attached.
 
 ## `RunResult` and statuses
