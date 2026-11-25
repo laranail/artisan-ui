@@ -7,6 +7,7 @@ namespace Simtabi\Laranail\ArtisanUI\Core\Policy;
 use Simtabi\Laranail\ArtisanUI\Enums\CommandRisk;
 use Simtabi\Laranail\ArtisanUI\Core\Support\CommandPattern;
 use Simtabi\Laranail\ArtisanUI\Core\Support\ArtisanUIConfig;
+use Simtabi\Laranail\ArtisanUI\Core\Validation\ValidatedInput;
 
 /**
  * Classifies a command by name into a CommandRisk.
@@ -131,9 +132,43 @@ final readonly class RiskClassifier
         'ide-helper:*',
     ];
 
+    /**
+     * Commands with a flag that makes a run change nothing, so a run with it set is Safe.
+     *
+     * Only this package's own command: tidy's dry run is tested here to delete nothing. Another
+     * command's `--dry-run` is that command's promise, which the panel cannot check, so it is not
+     * trusted. Classification by name ({@see classify()}) is unchanged; this is what a single run
+     * takes (AUI-26).
+     */
+    public const array PREVIEW_FLAGS = [
+        'laranail::artisan-ui.tidy' => 'dry-run',
+    ];
+
     public function __construct(
         private ArtisanUIConfig $config,
     ) {}
+
+    /**
+     * The class one run of a command takes: its class by name, lowered to Safe when it is a
+     * destructive command run with its preview flag set.
+     */
+    public function classifyRun(string $command, ValidatedInput $input): CommandRisk
+    {
+        $risk = $this->classify($command);
+        $flag = self::PREVIEW_FLAGS[$command] ?? null;
+
+        return $risk === CommandRisk::Destructive && $flag !== null && ($input->options[$flag] ?? null) === true
+            ? CommandRisk::Safe
+            : $risk;
+    }
+
+    /**
+     * The flag that makes a run of this command a preview, if it has one.
+     */
+    public function previewFlag(string $command): ?string
+    {
+        return self::PREVIEW_FLAGS[$command] ?? null;
+    }
 
     public function classify(string $command): CommandRisk
     {

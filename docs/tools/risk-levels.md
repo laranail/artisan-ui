@@ -89,6 +89,12 @@ Commands that change files in the application.
 | `stub:publish` | `config:publish` |
 | `install:*` | `ide-helper:*` |
 
+## Previews
+
+Classification is by name, with one exception for a single run. `RiskClassifier::classifyRun($command, $input)` lowers a destructive command to **safe** when it is run with its preview flag, listed in `RiskClassifier::PREVIEW_FLAGS`. Only this package's own [`tidy`](tidy.md) is there, with `--dry-run`: its dry run is tested to delete nothing. Another command's `--dry-run` is that command's promise, which the panel cannot check, so it is not trusted and the command still confirms.
+
+So tidy's Preview quick actions run without the typed name or a password, and every other tidy run still asks for both. The badge on the command list and the form stay **destructive**, because they describe the command, not one run of it, and a preview still takes the shared destructive lock.
+
 ## Adding your own
 
 ```php

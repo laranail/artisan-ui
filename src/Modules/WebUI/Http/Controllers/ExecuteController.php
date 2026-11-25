@@ -63,7 +63,8 @@ final class ExecuteController extends WebController
             $guard->deny($request, $decision, $definition->name);
         }
 
-        if ($risk->classify($definition->name)->requiresConfirmation()) {
+        // By this run's input: a tidy preview (--dry-run) deletes nothing, so it does not confirm.
+        if ($risk->classifyRun($definition->name, $input)->requiresConfirmation()) {
             $refusal = $confirmation->check($request, $definition);
 
             if ($refusal instanceof JsonResponse) {

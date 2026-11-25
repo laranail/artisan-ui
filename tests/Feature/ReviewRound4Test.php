@@ -16,9 +16,11 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Contracts\Console\Kernel;
 use Simtabi\Laranail\ArtisanUI\Enums\Ability;
 use Simtabi\Laranail\ArtisanUI\Enums\RunStatus;
+use Simtabi\Laranail\ArtisanUI\Enums\CommandRisk;
 use Simtabi\Laranail\ArtisanUI\Core\Audit\CommandRun;
 use Simtabi\Laranail\ArtisanUI\Core\Execution\RunGuard;
 use Simtabi\Laranail\ArtisanUI\Core\Events\AccessDenied;
+use Simtabi\Laranail\ArtisanUI\Core\Policy\RiskClassifier;
 use Simtabi\Laranail\Package\Tools\Testing\TestCredentials;
 use Simtabi\Laranail\ArtisanUI\Modules\WebUI\Support\Assets;
 use Simtabi\Laranail\ArtisanUI\Core\Discovery\CommandRegistry;
@@ -511,4 +513,37 @@ it('filters history to the viewer\'s own runs and names the user type', function
         ->and($mine)->toContain('01MINE00000000000000000000')->not->toContain('01THEIRS000000000000000000')
         ->and($mine)->toMatch('/name="mine"[^>]*checked/')
         ->and($all)->toContain(class_basename($me::class));
+});
+
+// AUI-26: tidy is destructive as a whole, so even its Preview quick actions (--dry-run) asked for
+// the typed name and a password. A tidy run with --dry-run deletes nothing, so it runs as Safe; any
+// other tidy run still confirms, and another command's --dry-run is not trusted.
+it('runs a tidy preview without the destructive confirmation', function (): void {
+    allowEverything();
+    $this->actingAs($this->makeUser());
+
+    $this->postJson(route('laranail-artisan-ui.execute', 'laranail::artisan-ui.tidy'), [
+        'arguments' => ['action' => 'logs'],
+        'options'   => ['dry-run' => '1', 'days' => '7'],
+    ])->assertOk()->assertJson(['success' => true]);
+});
+
+it('still confirms a tidy run that is not a preview', function (): void {
+    allowEverything();
+    $this->actingAs($this->makeUser());
+
+    $this->postJson(route('laranail-artisan-ui.execute', 'laranail::artisan-ui.tidy'), [
+        'arguments' => ['action' => 'logs'],
+        'options'   => ['days' => '7', 'force' => '1'],
+    ])->assertStatus(422)->assertJsonValidationErrors(['confirm']);
+});
+
+it('classifies by input only for the commands whose preview flag it knows', function (): void {
+    $classifier = app(RiskClassifier::class);
+    $preview = new ValidatedInput([], ['dry-run' => true]);
+
+    expect($classifier->classifyRun('laranail::artisan-ui.tidy', $preview))->toBe(CommandRisk::Safe)
+        ->and($classifier->classifyRun('laranail::artisan-ui.tidy', new ValidatedInput))->toBe(CommandRisk::Destructive)
+        ->and($classifier->classifyRun('migrate:fresh', $preview))->toBe(CommandRisk::Destructive)
+        ->and($classifier->classify('laranail::artisan-ui.tidy'))->toBe(CommandRisk::Destructive);
 });

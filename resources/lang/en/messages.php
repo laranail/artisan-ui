@@ -39,6 +39,7 @@ return [
     ],
     'confirm_label'    => 'Type :command to confirm',
     'confirm_mismatch' => 'Type ":command" exactly to confirm.',
+    'confirm_preview'  => 'Not needed with :flag: a preview changes nothing, so it runs without confirming.',
 
     'password_title'       => 'Confirm your password',
     'password_help'        => 'Destructive commands need a recent password confirmation.',

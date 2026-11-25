@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Behaviour change:** a `tidy` run with `--dry-run` no longer asks for the typed name and a password,
+  because it deletes nothing; tidy's Preview quick actions now run in one click. Every other tidy run
+  still confirms, and no other command's `--dry-run` is trusted. `RiskClassifier::classifyRun()` is the
+  new per-run classification; `classify()` is unchanged.
+
 - History shows a failed run's exception message only to holders of `view-environment`, the ability
   that already guards server details; other `view-history` holders see the run id, as the live run
   response does.
