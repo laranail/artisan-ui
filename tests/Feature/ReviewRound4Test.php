@@ -415,3 +415,54 @@ it('translates quick-action and environment labels through the application JSON 
         ->and($html)->toContain('Optimiser')
         ->and($html)->toContain('Mode débogage');
 });
+
+// AUI-13: the history page's Rerun link carried the recorded input in the query string, where it
+// reached access logs and browser history. It carries the run id now, and the form is filled on the
+// server from the recorded (already redacted) input.
+it('reruns from history by run id, filling the form on the server', function (): void {
+    allowEverything();
+    $this->actingAs($this->makeUser());
+    config()->set('laranail.artisan-ui.audit.driver', 'database');
+    (require dirname(__DIR__, 2) . '/database/migrations/create_laranail_artisan_ui_runs_table.php.stub')->up();
+
+    $run = app(CommandExecutor::class)->execute(app(CommandRegistry::class)->find('lau-fixture:echo'), new ValidatedInput(['text' => 'from-history']));
+
+    $history = (string) $this->get(route('laranail-artisan-ui.history'))->assertOk()->getContent();
+    $link = route('laranail-artisan-ui.detail', ['command' => 'lau-fixture:echo', 'rerun' => $run->context->runId]);
+
+    expect($history)->toContain(e($link))
+        ->and($history)->not->toContain('arguments%5Btext%5D=from-history');
+
+    expect((string) $this->get($link)->assertOk()->getContent())->toContain('value="from-history"');
+});
+
+it('ignores a rerun id for another command or without the history ability', function (bool $mismatch): void {
+    allowEverything();
+    $this->actingAs($this->makeUser());
+    config()->set('laranail.artisan-ui.audit.driver', 'database');
+    (require dirname(__DIR__, 2) . '/database/migrations/create_laranail_artisan_ui_runs_table.php.stub')->up();
+    $run = app(CommandExecutor::class)->execute(app(CommandRegistry::class)->find('lau-fixture:echo'), new ValidatedInput(['text' => 'from-history']));
+
+    if (! $mismatch) {
+        Gate::define(Ability::ViewHistory->value, static fn (): bool => false);
+    }
+
+    $html = (string) $this->get(route('laranail-artisan-ui.detail', [
+        'command' => $mismatch ? 'lau-fixture:buffers' : 'lau-fixture:echo',
+        'rerun'   => $run->context->runId,
+    ]))->assertOk()->getContent();
+
+    expect($html)->not->toContain('from-history');
+})->with(['another command' => true, 'no history ability' => false]);
+
+it('fills a recorded flag back in when rerunning by id', function (): void {
+    allowEverything();
+    $this->actingAs($this->makeUser());
+    config()->set('laranail.artisan-ui.audit.driver', 'database');
+    (require dirname(__DIR__, 2) . '/database/migrations/create_laranail_artisan_ui_runs_table.php.stub')->up();
+    $run = app(CommandExecutor::class)->execute(app(CommandRegistry::class)->find('lau-fixture:echo'), new ValidatedInput(['text' => 'x'], ['shout' => true]));
+
+    $html = (string) $this->get(route('laranail-artisan-ui.detail', ['command' => 'lau-fixture:echo', 'rerun' => $run->context->runId]))->assertOk()->getContent();
+
+    expect($html)->toMatch('/name="options\[shout\]"[^>]*checked/');
+});

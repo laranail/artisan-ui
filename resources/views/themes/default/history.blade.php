@@ -54,7 +54,7 @@
                             <div class="flex flex-wrap items-center justify-between gap-2">
                                 <p class="font-mono text-zinc-500 dark:text-zinc-400">{{ __('laranail/artisan-ui::messages.run_id', ['run' => $run->id]) }}</p>
                                 {{-- Outside <summary>: a link nested in a disclosure button is unreachable for many assistive tools. --}}
-                                <a href="{{ route('laranail-artisan-ui.detail', ['command' => $run->command, 'arguments' => $run->arguments ?? [], 'options' => array_map(static fn ($v) => $v ?? '', $run->options ?? [])]) }}" class="text-xs underline">{{ __('laranail/artisan-ui::messages.history_rerun') }}: {{ $run->command }}</a>
+                                <a href="{{ route('laranail-artisan-ui.detail', ['command' => $run->command, 'rerun' => $run->id]) }}" class="text-xs underline">{{ __('laranail/artisan-ui::messages.history_rerun') }}: {{ $run->command }}</a>
                             </div>
                             @if ($run->error)
                                 <p class="text-red-700 dark:text-red-400">{{ $run->error }}</p>

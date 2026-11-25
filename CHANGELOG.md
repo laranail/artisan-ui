@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- History's **Rerun** link carries the run id (`?rerun=<id>`) instead of the recorded input, which
+  reached access logs and browser history in the query string. The form is filled on the server, for
+  those with `view-history`, from the recorded (already redacted) input. Query-string prefill links
+  still work.
+
 - Quick-action group labels, descriptions and action labels, and the environment panel's row labels,
   render through `__()` keyed by their English text, so an application can translate them in its own
   `lang/<locale>.json`. Untranslated, they render as before.

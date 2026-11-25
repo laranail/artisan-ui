@@ -104,6 +104,8 @@ The home screen links to it only when both conditions hold.
 
 Each history entry has a **Rerun** link to the command's form, pre-filled with the recorded arguments and options. It never runs anything by itself.
 
+The link carries only the run id (`?rerun=<id>`); the form is filled on the server from the recorded input, which is already redacted, so the input never reaches access logs or browser history. It fills the form only for someone with the `view-history` ability, and only for the command that run was of; anything else falls back to the query-string prefill (`?arguments[...]=…&options[...]=…`), which still works for links built by hand.
+
 Recorded input is redacted, so a masked secret must be typed again: any pre-fill value equal to `redaction.mask` is dropped rather than put in the form, where submitting it would send the mask as the value. Pre-filling also keeps only keys the command still defines.
 
 ---
