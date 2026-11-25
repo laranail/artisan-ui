@@ -1,6 +1,7 @@
 @php
     /** @var int $status */
     /** @var string $message */
+    /** @var bool|null $styled */
     $assets = app(\Simtabi\Laranail\ArtisanUI\Modules\WebUI\Support\Assets::class);
 
     // The asset route is absent while the panel is disabled; the page must still render.
@@ -17,7 +18,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>{{ $status }} · {{ config('app.name') }}</title>
-    @if ($stylesheet)
+    @if ($stylesheet && ($styled ?? true))
         <link rel="stylesheet" href="{{ $stylesheet }}">
     @endif
 </head>

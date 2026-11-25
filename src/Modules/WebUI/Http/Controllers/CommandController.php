@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Simtabi\Laranail\ArtisanUI\Modules\WebUI\Http\Controllers;
 
+use Throwable;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
 use Illuminate\Contracts\Auth\Access\Gate;
@@ -53,7 +54,13 @@ final class CommandController extends WebController
         $rerun = $request->query('rerun');
 
         if (is_string($rerun) && $rerun !== '' && $config->auditDriver() === AuditDriver::Database && $gate->allows(Ability::ViewHistory->value)) {
-            $run = CommandRun::query()->whereKey($rerun)->where('command', $definition->name)->first();
+            try {
+                $run = CommandRun::query()->whereKey($rerun)->where('command', $definition->name)->first();
+            } catch (Throwable) {
+                // The table can be gone (migrate:fresh), which the recorder tolerates too: fall
+                // back to the query string rather than failing the page.
+                $run = null;
+            }
 
             if ($run instanceof CommandRun) {
                 return Prefill::fromRun($run->arguments, $run->options, $definition, $config->redactionMask());

@@ -20,7 +20,10 @@ use Simtabi\Laranail\ArtisanUI\Enums\CommandRisk;
 use Simtabi\Laranail\ArtisanUI\Core\Audit\CommandRun;
 use Simtabi\Laranail\ArtisanUI\Core\Execution\RunGuard;
 use Simtabi\Laranail\ArtisanUI\Core\Events\AccessDenied;
+use Simtabi\Laranail\ArtisanUI\Core\Presets\PresetGroup;
+use Simtabi\Laranail\ArtisanUI\Core\Presets\QuickAction;
 use Simtabi\Laranail\ArtisanUI\Core\Policy\RiskClassifier;
+use Simtabi\Laranail\ArtisanUI\Core\Presets\PresetCatalog;
 use Simtabi\Laranail\Package\Tools\Testing\TestCredentials;
 use Simtabi\Laranail\ArtisanUI\Modules\WebUI\Support\Assets;
 use Simtabi\Laranail\ArtisanUI\Core\Discovery\CommandRegistry;
@@ -546,4 +549,69 @@ it('classifies by input only for the commands whose preview flag it knows', func
         ->and($classifier->classifyRun('laranail::artisan-ui.tidy', new ValidatedInput))->toBe(CommandRisk::Destructive)
         ->and($classifier->classifyRun('migrate:fresh', $preview))->toBe(CommandRisk::Destructive)
         ->and($classifier->classify('laranail::artisan-ui.tidy'))->toBe(CommandRisk::Destructive);
+});
+
+/*
+ * Independent review of this branch (2026-11-25), R-1 to R-8.
+ */
+
+// R-1: `cache:clear` is Safe, but `--locks` flushes the lock store itself, separate or not, so a
+// Safe user could drop a running destructive command's lock. That one run takes the destructive class.
+it('classifies cache:clear --locks as destructive for that run', function (): void {
+    $classifier = app(RiskClassifier::class);
+
+    expect($classifier->classifyRun('cache:clear', new ValidatedInput([], ['locks' => true])))->toBe(CommandRisk::Destructive)
+        ->and($classifier->classifyRun('cache:clear', new ValidatedInput))->toBe(CommandRisk::Safe);
+});
+
+// R-2: tidy read the raw audit.channel, while the recorder treats '' as "the default channel";
+// LARANAIL_ARTISAN_UI_AUDIT_CHANNEL= (set but empty) protected nothing.
+it('protects the default channel when the audit channel is set but empty', function (): void {
+    config()->set('laranail.artisan-ui.audit.driver', 'log');
+    config()->set('laranail.artisan-ui.audit.channel', '');
+    config()->set('logging.default', 'file');
+    config()->set('logging.channels.file', ['driver' => 'single', 'path' => storage_path('logs/app.log')]);
+
+    $audit = tidyStorageFile('logs/app.log', 'run started');
+
+    $this->artisan('laranail::artisan-ui.tidy', ['action' => 'logs', '--force' => true])->assertExitCode(0);
+
+    expect($audit)->toBeFile();
+});
+
+// R-4: with the database driver and its table gone (migrate:fresh), a ?rerun= link threw.
+it('falls back to the query-string prefill when the run table is missing', function (): void {
+    allowEverything();
+    $this->actingAs($this->makeUser());
+    config()->set('laranail.artisan-ui.audit.driver', 'database');
+
+    $this->get(route('laranail-artisan-ui.detail', ['command' => 'lau-fixture:echo', 'rerun' => '01NOTABLE00000000000000000', 'arguments' => ['text' => 'fallback']]))
+        ->assertOk()
+        ->assertSee('value="fallback"', false);
+});
+
+// R-6: a label equal to a translation group name (`auth`, `validation`) made __() return an array,
+// and the page a 500.
+it('renders a quick-action label that names a translation group as written', function (): void {
+    allowEverything();
+    $this->actingAs($this->makeUser());
+    app(PresetCatalog::class)->register(
+        new PresetGroup('mine', 'validation', [
+            new QuickAction('auth', 'about', [], []),
+        ]),
+    );
+
+    $html = (string) $this->get(route('laranail-artisan-ui.home'))->assertOk()->getContent();
+
+    expect($html)->toContain('>validation</summary>');
+});
+
+// R-3: outside the allowlists the asset route answers 404, so the 403 page shown there must not
+// link a stylesheet it cannot load.
+it('renders the network-refused page without the stylesheet it cannot load', function (): void {
+    config()->set('laranail.artisan-ui.allowed_ips', ['10.0.0.0/8']);
+
+    $html = (string) $this->get(route('laranail-artisan-ui.home'))->assertForbidden()->getContent();
+
+    expect($html)->not->toContain('rel="stylesheet"');
 });

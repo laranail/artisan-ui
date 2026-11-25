@@ -80,7 +80,9 @@ One cache lock per command, named `laranail-artisan-ui:run:<command>`, so two op
 
 A cache store that does not implement `LockProvider` runs the command unlocked and logs `tolerated anomaly [laranail/artisan-ui:run.lock]` at warning; doctor's "Run locks" check warns.
 
-**Keep the locks apart from the cache data.** `cache:clear`, `optimize:clear` and tidy's `cache`, `temp` and `all` actions are all Safe and all flush the default store. A store whose locks live in its data loses them too, so clearing the cache while `migrate:fresh` runs lets a second destructive command start alongside it. Give the store a separate lock store, which Laravel supports on each driver: `lock_connection` on `redis` (separate by default), `lock_table` on `database` (`cache_locks` by default), `lock_path` on `file`. Doctor's "Run locks" check warns until it is. The per-user rate limiter is cache data either way, so a flush resets it.
+**Keep the locks apart from the cache data.** `cache:clear` and `optimize:clear` are Safe and flush the default store (tidy's `cache`, `temp` and `all` actions do too, but tidy is destructive, so it takes the shared destructive lock and waits its turn, a `--dry-run` preview included). A store whose locks live in its data loses them too, so clearing the cache while `migrate:fresh` runs lets a second destructive command start alongside it. Give the store a separate lock store, which Laravel supports on each driver: `lock_connection` on `redis` (separate by default), `lock_table` on `database` (`cache_locks` by default), `lock_path` on `file`. Doctor's "Run locks" check warns until it is. The per-user rate limiter is cache data either way, so a flush resets it.
+
+`cache:clear --locks` flushes the lock store itself, separate or not, so that one run is classified **destructive** (`RiskClassifier::DESTRUCTIVE_FLAGS`): it asks for the typed name and a password like any other destructive command.
 
 A lock that cannot be released (its table dropped by `db:wipe` or `migrate:fresh`, say) is logged at warning and left to expire after `limits.lock_seconds`; the run's response is not affected.
 

@@ -13,9 +13,9 @@ use Simtabi\Laranail\ArtisanUI\Modules\WebUI\Support\Assets;
  * Serves the built stylesheet and script from the package directory, immutably cached: the
  * URL carries the content hash, so a new build is a new URL.
  *
- * No sign-in is asked (the 403 page needs the stylesheet too), but the environment and network
- * allowlists are: outside them the route answers a bare 404, as the panel's other routes give
- * nothing away there, so the bundle cannot confirm the panel exists (AUI-16).
+ * No sign-in is asked (the 403 page for a signed-out or refused user needs the stylesheet too),
+ * but the environment and network allowlists are: outside them the route answers a bare 404, so
+ * the bundle cannot confirm the panel exists (AUI-16). The 403 page shown there renders plain.
  */
 final class AssetController
 {

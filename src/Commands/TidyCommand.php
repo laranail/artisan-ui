@@ -11,8 +11,10 @@ use Psr\Log\LoggerInterface;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use Illuminate\Console\ConfirmableTrait;
+use Simtabi\Laranail\ArtisanUI\Enums\AuditDriver;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Simtabi\Laranail\Console\Tools\Commands\Command;
+use Simtabi\Laranail\ArtisanUI\Core\Support\ArtisanUIConfig;
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Simtabi\Laranail\ArtisanUI\Commands\Concerns\FilePathGuard;
 use Simtabi\Laranail\Console\Tools\Commands\Concerns\SupportsNamespacedNames;
@@ -610,12 +612,15 @@ final class TidyCommand extends Command
     private function resolveAuditLogTargets(): array
     {
         $config = $this->getLaravel()->make(ConfigRepository::class);
+        // The recorder's own accessors, so tidy protects exactly the channel runs are written to:
+        // an empty channel means the default one, and the driver may be an enum case.
+        $artisanUi = $this->getLaravel()->make(ArtisanUIConfig::class);
 
-        if ($config->get('laranail.artisan-ui.audit.driver') === 'none') {
+        if ($artisanUi->auditDriver() === AuditDriver::None) {
             return [];
         }
 
-        $channel = $config->get('laranail.artisan-ui.audit.channel') ?? $config->get('logging.default');
+        $channel = $artisanUi->auditChannel() ?? $config->get('logging.default');
         $targets = [];
         $pending = is_string($channel) ? [$channel] : [];
         $seen = [];

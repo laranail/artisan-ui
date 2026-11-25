@@ -144,6 +144,15 @@ final readonly class RiskClassifier
         'laranail::artisan-ui.tidy' => 'dry-run',
     ];
 
+    /**
+     * Safe commands with a flag that makes a run destructive. `cache:clear --locks` flushes the
+     * lock store itself, whether or not it is kept apart from the cache data, so a Safe user
+     * could drop a running destructive command's lock.
+     */
+    public const array DESTRUCTIVE_FLAGS = [
+        'cache:clear' => 'locks',
+    ];
+
     public function __construct(
         private ArtisanUIConfig $config,
     ) {}
@@ -157,9 +166,17 @@ final readonly class RiskClassifier
         $risk = $this->classify($command);
         $flag = self::PREVIEW_FLAGS[$command] ?? null;
 
-        return $risk === CommandRisk::Destructive && $flag !== null && ($input->options[$flag] ?? null) === true
-            ? CommandRisk::Safe
-            : $risk;
+        if ($risk === CommandRisk::Destructive && $flag !== null && ($input->options[$flag] ?? null) === true) {
+            return CommandRisk::Safe;
+        }
+
+        $raising = self::DESTRUCTIVE_FLAGS[$command] ?? null;
+
+        if ($risk === CommandRisk::Safe && $raising !== null && ($input->options[$raising] ?? null) === true) {
+            return CommandRisk::Destructive;
+        }
+
+        return $risk;
     }
 
     /**

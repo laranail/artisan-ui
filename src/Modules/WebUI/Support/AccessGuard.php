@@ -85,7 +85,10 @@ final readonly class AccessGuard
 
         throw new HttpResponseException(new Response(
             $this->views->make('denied', [
-                'status'  => $decision->status,
+                'status' => $decision->status,
+                // Outside the environment or network allowlist the asset route answers 404, so the
+                // page does not ask for a stylesheet it cannot have; it renders plain.
+                'styled'  => ! in_array($decision->reason, ['environment', 'ip'], true),
                 'message' => __('laranail/artisan-ui::messages.denied.' . ($decision->status === 404 ? 'not_found' : 'forbidden')),
             ])->render(),
             $decision->status,

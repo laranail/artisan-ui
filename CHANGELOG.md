@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Behaviour change:** `cache:clear --locks` is classified destructive for that run, so the panel asks
+  for the typed name and a password: it flushes the lock store itself, which let a Safe user drop a
+  running destructive command's lock. `cache:clear` without it stays safe.
+
 - Package classes take the framework's contracts instead of `config()` and the `Date` facade
   (`SecurityHeaders`, `CsrfTokenController`, `DestructiveConfirmation`), and
   `tests/Arch/NoFacadeCallsTest.php` keeps it that way with package-tools' `assertNoFacadeCallsIn()`

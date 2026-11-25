@@ -311,9 +311,10 @@ final readonly class Checks
             return DoctorResult::warn('The cache store cannot lock, so the same command can run twice at once.');
         }
 
-        // cache:clear, optimize:clear and the tidy cache, temp and all actions flush the store. A
-        // store whose locks live in its data loses them too, so a Safe command can drop a running
-        // destructive command's lock and let a second one start alongside it (AUI-06).
+        // cache:clear and optimize:clear are Safe and flush the store. A store whose locks live in
+        // its data loses them too, so a Safe command can drop a running destructive command's lock
+        // and let a second one start alongside it (AUI-06). `cache:clear --locks` flushes even a
+        // separate lock store, which is why that run is classified destructive.
         if (! $store instanceof CanFlushLocks || ! $store->hasSeparateLockStore()) {
             return DoctorResult::warn(
                 'Run locks share the cache data that cache:clear, optimize:clear and tidy flush, so clearing the cache '
