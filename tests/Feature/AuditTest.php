@@ -110,7 +110,8 @@ it('shows history only with the database driver and the ViewHistory ability', fu
         ->assertOk()
         ->assertSee('lau-fixture:echo')
         ->assertSee('recorded')
-        ->assertSee(route('laranail-artisan-ui.detail', ['command' => 'lau-fixture:echo', 'arguments' => ['text' => 'recorded']]), false);
+        // The Rerun link names the run, not its input (AUI-13): the input stays out of the URL.
+        ->assertSee(route('laranail-artisan-ui.detail', ['command' => 'lau-fixture:echo', 'rerun' => CommandRun::query()->value('id')]), false);
 
     Gate::define('laranail-artisan-ui.view-history', static fn (): bool => false);
 
