@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Quick-action group labels, descriptions and action labels, and the environment panel's row labels,
+  render through `__()` keyed by their English text, so an application can translate them in its own
+  `lang/<locale>.json`. Untranslated, they render as before.
+
 - **Behaviour change:** more commands are classified destructive, so the panel now asks for the
   typed name and a password before running them: `schema:dump` (whose `--prune` deletes every
   migration file), installers (`*:install`, `*.install`, this package's own included),

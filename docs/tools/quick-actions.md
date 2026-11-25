@@ -84,6 +84,19 @@ Groups appear in this order: built-in, configured, then registered at runtime. `
 
 A configured action missing its `label` or `command` is skipped. Pre-filling keeps only keys the command defines and only text values; everything is validated on submit like any other input.
 
+## Translating the labels
+
+Group labels, descriptions and quick-action labels render through `__()`, keyed by their English text, and so do the environment panel's row labels. An application translates them in its own `lang/<locale>.json`, as it would any string, with nothing to publish:
+
+```json
+{
+    "Caches": "Cachés",
+    "Clear application cache": "Vider le cache de l'application"
+}
+```
+
+A label with no translation renders as written, so a group an application registers in its own language needs nothing.
+
 ## Switching them off
 
 ```php

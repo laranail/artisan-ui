@@ -399,3 +399,19 @@ it('reads the environment snapshot without opening a database connection', funct
     expect($opened)->toBeFalse()
         ->and(collect($snapshot)->firstWhere('label', 'Database')['value'])->toBe('sqlite');
 });
+
+// AUI-24: quick-action and environment labels were hard-coded English. They render through the
+// translator now, keyed by the English text, so an application translates them in its own
+// lang/<locale>.json and everything else is unchanged.
+it('translates quick-action and environment labels through the application JSON translations', function (): void {
+    allowEverything();
+    $this->actingAs($this->makeUser());
+    app('translator')->addLines(['*.Caches' => 'Cachés', '*.Optimize' => 'Optimiser', '*.Debug mode' => 'Mode débogage'], 'fr', '*');
+    app()->setLocale('fr');
+
+    $html = (string) $this->get(route('laranail-artisan-ui.home'))->assertOk()->getContent();
+
+    expect($html)->toContain('Cachés')
+        ->and($html)->toContain('Optimiser')
+        ->and($html)->toContain('Mode débogage');
+});

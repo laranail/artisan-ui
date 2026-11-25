@@ -61,21 +61,21 @@
                     <h2 id="lau-presets-heading" class="mb-3 text-lg font-semibold">{{ __('laranail/artisan-ui::messages.quick_actions') }}</h2>
                     @foreach ($presets as $group)
                         <details class="mb-2 rounded-md border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-                            <summary class="cursor-pointer px-3 py-2 text-sm font-medium">{{ $group->label }}</summary>
+                            <summary class="cursor-pointer px-3 py-2 text-sm font-medium">{{ __($group->label) }}</summary>
                             @if ($group->description)
-                                <p class="px-3 pb-2 text-xs text-zinc-500 dark:text-zinc-400">{{ $group->description }}</p>
+                                <p class="px-3 pb-2 text-xs text-zinc-500 dark:text-zinc-400">{{ __($group->description) }}</p>
                             @endif
                             <ul class="border-t border-zinc-100 py-1 dark:border-zinc-800">
                                 @foreach ($group->actions as $action)
                                     <li>
                                         @if ($action->isAvailable())
-                                            <a href="{{ route('laranail-artisan-ui.detail', ['command' => $action->command, ...$action->prefill()]) }}" class="block px-3 py-1.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800" @if ($action->description) title="{{ $action->description }}" @endif>
-                                                {{ $action->label }}
+                                            <a href="{{ route('laranail-artisan-ui.detail', ['command' => $action->command, ...$action->prefill()]) }}" class="block px-3 py-1.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800" @if ($action->description) title="{{ __($action->description) }}" @endif>
+                                                {{ __($action->label) }}
                                                 <span class="block font-mono text-xs text-zinc-500 dark:text-zinc-400">{{ $action->command }}</span>
                                             </a>
                                         @else
                                             <span class="block cursor-not-allowed px-3 py-1.5 text-sm text-zinc-500 dark:text-zinc-400" aria-disabled="true" title="{{ $action->unavailableReason }}">
-                                                {{ $action->label }}
+                                                {{ __($action->label) }}
                                                 <span class="block text-xs">{{ __('laranail/artisan-ui::messages.unavailable') }}: {{ $action->unavailableReason }}</span>
                                             </span>
                                         @endif
@@ -92,7 +92,7 @@
                     <h2 id="lau-env-heading" class="mb-2 text-lg font-semibold">{{ __('laranail/artisan-ui::messages.environment') }}</h2>
                     <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
                         @foreach ($environment as $row)
-                            <dt class="text-zinc-500 dark:text-zinc-400">{{ $row['label'] }}</dt>
+                            <dt class="text-zinc-500 dark:text-zinc-400">{{ __($row['label']) }}</dt>
                             <dd class="font-mono">{{ $row['value'] }}</dd>
                         @endforeach
                     </dl>
