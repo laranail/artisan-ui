@@ -7,11 +7,14 @@ use Illuminate\Console\Command;
 use Illuminate\Cache\ArrayStore;
 use Illuminate\Cache\Repository;
 use Illuminate\Auth\GuardHelpers;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Contracts\Console\Kernel;
+use Simtabi\Laranail\ArtisanUI\Enums\Ability;
 use Simtabi\Laranail\ArtisanUI\Enums\RunStatus;
 use Simtabi\Laranail\ArtisanUI\Core\Audit\CommandRun;
 use Simtabi\Laranail\ArtisanUI\Core\Execution\RunGuard;
@@ -22,6 +25,7 @@ use Simtabi\Laranail\ArtisanUI\Core\Discovery\CommandRegistry;
 use Simtabi\Laranail\ArtisanUI\Core\Execution\CommandExecutor;
 use Simtabi\Laranail\ArtisanUI\Core\Validation\ValidatedInput;
 use Simtabi\Laranail\ArtisanUI\Core\Discovery\CommandDefinition;
+use Simtabi\Laranail\ArtisanUI\Core\Environment\EnvironmentInfo;
 use Simtabi\Laranail\ArtisanUI\Core\Discovery\ArgumentDefinition;
 
 /*
@@ -349,4 +353,49 @@ it('logs the start of a run once when the database recorder falls back at both e
 
     expect(substr_count($log, 'run started'))->toBe(1)
         ->and(substr_count($log, 'run finished'))->toBe(1);
+});
+
+// AUI-22: the command links' focus style was a near-white background on white (about 1.04:1),
+// which fails WCAG 2.4.7 and 1.4.11; a keyboard user could not see where they were.
+// AUI-23: risk help was only in a title attribute, which screen readers and touch users miss.
+it('gives command links a visible focus ring and risk badges readable help', function (): void {
+    allowEverything();
+    $this->actingAs($this->makeUser());
+
+    $html = (string) $this->get(route('laranail-artisan-ui.home'))->assertOk()->getContent();
+
+    expect($html)->toMatch('/<li data-lau-command[^>]*>\s*<a [^>]*focus-visible:outline-2/')
+        ->and($html)->not->toMatch('/<li data-lau-command[^>]*>\s*<a [^>]*focus:outline-none/');
+
+    $detail = (string) $this->get(route('laranail-artisan-ui.detail', 'lau-fixture:wipe'))->assertOk()->getContent();
+
+    expect($detail)->toContain('<span class="sr-only">');
+});
+
+// AUI-33: every Access holder saw the environment name in the header, while the environment
+// panel that shows the same fact is gated by ViewEnvironment.
+it('shows the environment in the header only to those who may view the environment', function (bool $allowed): void {
+    Gate::define(Ability::Access->value, static fn (): bool => true);
+    Gate::define(Ability::ViewEnvironment->value, static fn (): bool => $allowed);
+    $this->actingAs($this->makeUser());
+
+    $html = (string) $this->get(route('laranail-artisan-ui.home'))->assertOk()->getContent();
+
+    expect(str_contains($html, 'data-lau-header-environment'))->toBe($allowed);
+})->with([true, false]);
+
+// AUI-34: the environment panel opened a database connection on every page load to read the
+// server version, so a slow database stalled the panel.
+it('reads the environment snapshot without opening a database connection', function (): void {
+    // A connection nothing has opened yet: the snapshot must leave it closed.
+    config()->set('database.connections.lau-probe', ['driver' => 'sqlite', 'database' => ':memory:']);
+    $default = config('database.default');
+    config()->set('database.default', 'lau-probe');
+
+    $snapshot = app(EnvironmentInfo::class)->snapshot();
+    $opened = array_key_exists('lau-probe', DB::getConnections());
+    config()->set('database.default', $default);
+
+    expect($opened)->toBeFalse()
+        ->and(collect($snapshot)->firstWhere('label', 'Database')['value'])->toBe('sqlite');
 });

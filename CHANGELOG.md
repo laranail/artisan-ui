@@ -49,6 +49,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Command links show a visible focus ring (the old near-white background on white was about 1.04:1),
+  risk badges carry their help as screen-reader text as well as a tooltip, and the greyed-out quick
+  action and the error-page status code meet contrast. The header shows the environment name only to
+  those with the `view-environment` ability, as the environment panel does. The environment panel no
+  longer opens a database connection to read the server version; it names the driver, and the
+  version only when the connection is already open.
+
 - A `beforeRun` hook that throws now shows "Something went wrong" and reaches the notifier, instead
   of silently doing nothing; a hook returning `false` is still a quiet veto. A `422` error with no
   field to sit beside (an `arguments` or `options` error) is shown in the status line rather than

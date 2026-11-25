@@ -39,7 +39,7 @@
                     <ul class="divide-y divide-zinc-100 border-t border-zinc-100 dark:divide-zinc-800 dark:border-zinc-800">
                         @foreach ($commands as $command)
                             <li data-lau-command data-name="{{ $command->name }}" data-description="{{ $command->description }}">
-                                <a href="{{ route('laranail-artisan-ui.detail', $command->name) }}" class="flex items-start justify-between gap-4 px-4 py-2 hover:bg-zinc-50 focus:bg-zinc-50 focus:outline-none dark:hover:bg-zinc-800 dark:focus:bg-zinc-800">
+                                <a href="{{ route('laranail-artisan-ui.detail', $command->name) }}" class="flex items-start justify-between gap-4 px-4 py-2 hover:bg-zinc-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-zinc-900 dark:hover:bg-zinc-800 dark:focus-visible:outline-zinc-100">
                                     <span class="min-w-0">
                                         <span class="block font-mono text-sm">{{ $command->name }}</span>
                                         <span class="block truncate text-sm text-zinc-500 dark:text-zinc-400">{{ $command->description }}</span>
@@ -74,7 +74,7 @@
                                                 <span class="block font-mono text-xs text-zinc-500 dark:text-zinc-400">{{ $action->command }}</span>
                                             </a>
                                         @else
-                                            <span class="block cursor-not-allowed px-3 py-1.5 text-sm text-zinc-400" aria-disabled="true" title="{{ $action->unavailableReason }}">
+                                            <span class="block cursor-not-allowed px-3 py-1.5 text-sm text-zinc-500 dark:text-zinc-400" aria-disabled="true" title="{{ $action->unavailableReason }}">
                                                 {{ $action->label }}
                                                 <span class="block text-xs">{{ __('laranail/artisan-ui::messages.unavailable') }}: {{ $action->unavailableReason }}</span>
                                             </span>
