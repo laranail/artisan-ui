@@ -49,6 +49,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A finished run no longer stays in memory for the life of a long-lived worker. Its shutdown guard
+  kept its callback, and with it the executor, the run's unredacted input and its lock, because PHP
+  holds every registered shutdown function until the process exits. The guard now drops the
+  callback once it is disarmed or has run.
+- A run whose lock cannot be released (`db:wipe` or `migrate:fresh` on the database cache store
+  drops `cache_locks`) is no longer answered with a 500 after it succeeded and was recorded. The
+  failure is logged at warning and the lock left to expire.
+- `tidy` now fails, with exit code 1 and the nested command named, when a command it runs fails:
+  `migrate:fresh`, `db:seed`, `cache:clear` or `optimize:clear`. Their exit codes were ignored, so a
+  failed `migrate:fresh` printed "Database refreshed." and the panel recorded the run as succeeded.
+- A command that has already run in a long-lived worker no longer lists the application's own
+  `command` argument. Discovery reads each command's native definition, not the one Symfony merges
+  the application definition into after a run.
+
 - `tidy storage --days=0 --force` (or `--size=0`, or a non-numeric `--days`) no longer deletes
   every upload. A zero filter counted as a scope, which got it past both the user-file gate and the
   production refusal. A zero is now no filter, so the gate refuses the sweep, and a value that is not

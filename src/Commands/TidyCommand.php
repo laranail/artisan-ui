@@ -180,13 +180,15 @@ final class TidyCommand extends Command
         try {
             // Flush via the framework's own command so every store/driver is
             // honoured; the injected cache repo is exercised above for DI parity.
-            $this->call('cache:clear');
+            if (! $this->callSucceeded('cache:clear')) {
+                return self::FAILURE;
+            }
         } catch (Throwable $e) {
             $this->log->error('Cache flush failed during tidy', ['error' => $e->getMessage()]);
         }
 
-        if ($this->boolOption('optimize')) {
-            $this->call('optimize:clear');
+        if ($this->boolOption('optimize') && ! $this->callSucceeded('optimize:clear')) {
+            return self::FAILURE;
         }
 
         $writer->success('Cache tidied.');
@@ -366,10 +368,12 @@ final class TidyCommand extends Command
             return self::FAILURE;
         }
 
-        $this->call('migrate:fresh', ['--force' => true]);
+        if (! $this->callSucceeded('migrate:fresh', ['--force' => true])) {
+            return self::FAILURE;
+        }
 
-        if ($this->boolOption('seed')) {
-            $this->call('db:seed', ['--force' => true]);
+        if ($this->boolOption('seed') && ! $this->callSucceeded('db:seed', ['--force' => true])) {
+            return self::FAILURE;
         }
 
         $writer->success('Database refreshed.');
@@ -546,6 +550,26 @@ final class TidyCommand extends Command
             $writer->error("Refusing to sweep {$roots} with no filter — these hold user files, and every one would match.");
             $writer->line('  Pass <fg=yellow>--days=30</> or <fg=yellow>--size=100</> to scope it,');
             $writer->line('  or <fg=yellow>--unfiltered</> to delete all of it anyway (never in production).');
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Run a nested command and report whether it exited 0. Its exit code used to be ignored,
+     * so a migrate:fresh that failed still printed "Database refreshed." and returned success,
+     * and the panel recorded the run as succeeded (AUI-08).
+     *
+     * @param array<string, mixed> $arguments
+     */
+    private function callSucceeded(string $command, array $arguments = []): bool
+    {
+        $code = $this->call($command, $arguments);
+
+        if ($code !== self::SUCCESS) {
+            $this->consoleWriter()->error("{$command} failed (exit code {$code}); stopping.");
 
             return false;
         }
