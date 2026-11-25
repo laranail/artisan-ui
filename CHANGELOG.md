@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Behaviour change:** more commands are classified destructive, so the panel now asks for the
+  typed name and a password before running them: `schema:dump` (whose `--prune` deletes every
+  migration file), installers (`*:install`, `*.install`, this package's own included),
+  `telescope:clear`/`prune`, `pulse:clear`/`purge`, `scout:flush`/`delete-index`/`delete-all-indexes`,
+  `passport:keys` and `test`. Until now they fell through to the Safe default. An application that
+  wants one back as safe lists it under `risk.safe`.
+
 - `LICENSE` is the plain MIT text with every copyright line, so GitHub and Packagist detect it as MIT; the attribution prose moved to `attribution.md`.
 - Test credentials are generated at run time with `TestCredentials` instead of being written into
   the tests, and `tests/Arch/NoLiteralCredentialsTest.php` fails the suite on any literal

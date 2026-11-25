@@ -19,7 +19,7 @@ The first list that matches decides, in this order:
 
 **safe → forbidden → destructive → writes_files**
 
-Anything that matches none is **safe**. Because `safe` is checked first, an entry there carves an exception out of any other list, including the package defaults: `migrate:status` is safe although `migrate:*` is destructive.
+Anything that matches none is **safe**, so a destructive command of your own that is on no list runs with the `run` ability alone: list it under `risk.destructive`. Because `safe` is checked first, an entry there carves an exception out of any other list, including the package defaults: `migrate:status` is safe although `migrate:*` is destructive.
 
 ## Default lists
 
@@ -69,8 +69,14 @@ Commands that destroy data, rotate secrets or take the application down.
 | `queue:retry-batch` | `env:encrypt` |
 | `horizon:terminate` | `horizon:clear` |
 | `horizon:purge` | `laranail::artisan-ui.tidy` |
+| `schema:dump` | `*:install` |
+| `*.install` | `telescope:clear` |
+| `telescope:prune` | `pulse:clear` |
+| `pulse:purge` | `scout:flush` |
+| `scout:delete-index` | `scout:delete-all-indexes` |
+| `passport:keys` | `test` |
 
-`down` is destructive because running it from the panel locks the panel out too, unless the panel's path is exempt from maintenance mode or `down --secret` is used. `key:generate` rotates `APP_KEY`, which signs everyone out and makes previously encrypted data unreadable. `schedule:test` runs whichever scheduled task is picked, whatever it does; `queue:retry` re-dispatches jobs that failed for a reason; `env:encrypt` rewrites `.env.encrypted`. This package's own [`laranail::artisan-ui.tidy`](tidy.md) deletes files under storage and its `db` action runs `migrate:fresh`; one name covers every action, so it takes the class of the worst.
+`down` is destructive because running it from the panel locks the panel out too, unless the panel's path is exempt from maintenance mode or `down --secret` is used. `key:generate` rotates `APP_KEY`, which signs everyone out and makes previously encrypted data unreadable. `schedule:test` runs whichever scheduled task is picked, whatever it does; `schema:dump --prune` deletes every migration file; installers (`filament:install`, `laranail::artisan-ui.install`) publish and overwrite files and run migrations, while the framework's own `install:*` stays writes-files; `telescope:*`, `pulse:*` and `scout:*` entries delete stored data or indexes; `passport:keys --force` replaces the OAuth keys; `test` can refresh the configured database; `queue:retry` re-dispatches jobs that failed for a reason; `env:encrypt` rewrites `.env.encrypted`. This package's own [`laranail::artisan-ui.tidy`](tidy.md) deletes files under storage and its `db` action runs `migrate:fresh`; one name covers every action, so it takes the class of the worst.
 
 ### Writes files (`RiskClassifier::WRITES_FILES`)
 

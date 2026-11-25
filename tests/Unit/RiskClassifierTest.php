@@ -59,3 +59,31 @@ it('keeps tidy destructive even when an application lists it as writes-files', f
 
     expect(app(RiskClassifier::class)->classify('laranail::artisan-ui.tidy'))->toBe(CommandRisk::Destructive);
 });
+
+/*
+ * AUI-02 and AUI-03: anything on no list is Safe, so a command that destroys data and was
+ * simply never listed runs with no confirmation at all. `schema:dump --prune` deletes every
+ * migration file. Each row below names a command that destroys data, keys or files, and
+ * must never fall through to the Safe default.
+ */
+it('never lets a data-destroying command fall through to Safe', function (string $command): void {
+    expect(app(RiskClassifier::class)->classify($command))->toBe(CommandRisk::Destructive);
+})->with([
+    'schema:dump (--prune deletes migrations)'   => 'schema:dump',
+    'this package\'s installer'                  => 'laranail::artisan-ui.install',
+    'another package\'s vendor-scoped installer' => 'acme::billing.install',
+    'a colon-style installer'                    => 'filament:install',
+    'telescope:clear'                            => 'telescope:clear',
+    'telescope:prune'                            => 'telescope:prune',
+    'pulse:clear'                                => 'pulse:clear',
+    'pulse:purge'                                => 'pulse:purge',
+    'scout:flush'                                => 'scout:flush',
+    'scout:delete-index'                         => 'scout:delete-index',
+    'scout:delete-all-indexes'                   => 'scout:delete-all-indexes',
+    'passport:keys (--force replaces the keys)'  => 'passport:keys',
+    'test (can refresh a database)'              => 'test',
+]);
+
+it('still leaves the read-only and regenerable framework commands Safe', function (string $command): void {
+    expect(app(RiskClassifier::class)->classify($command))->toBe(CommandRisk::Safe);
+})->with(['about', 'route:list', 'cache:clear', 'optimize:clear', 'migrate:status', 'schedule:list']);

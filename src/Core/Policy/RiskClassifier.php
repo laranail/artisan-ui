@@ -96,6 +96,25 @@ final readonly class RiskClassifier
         // `db` action runs `migrate:fresh`; one name covers every action, so the class is
         // set by the worst of them, as `migrate:*` is.
         'laranail::artisan-ui.tidy',
+        // `--prune` deletes every migration file once the schema is dumped.
+        'schema:dump',
+        // Installers publish and overwrite files, run migrations and edit configuration. The
+        // colon form is the common one (`filament:install`); the dotted form is this family's
+        // (`laranail::artisan-ui.install`). `install:*` (the framework's own) stays writes-files.
+        '*:install',
+        '*.install',
+        // Debug and search data: each deletes stored entries or whole indexes.
+        'telescope:clear',
+        'telescope:prune',
+        'pulse:clear',
+        'pulse:purge',
+        'scout:flush',
+        'scout:delete-index',
+        'scout:delete-all-indexes',
+        // With --force, replaces the OAuth keys and invalidates every issued token.
+        'passport:keys',
+        // Runs the application's test suite, which can refresh the configured database.
+        'test',
     ];
 
     /**
