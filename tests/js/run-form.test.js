@@ -218,4 +218,27 @@ describe('run form, errors in collapsed panels', () => {
 
     expect(document.querySelector('[data-lau-status]').textContent).toContain('Unknown option [--nope].')
   })
+
+  // R-7: an error entry that is neither text nor a list printed "[object Object]".
+  it('leaves out a 422 error entry that is not text', async () => {
+    mount(async () => response(422, { message: 'Check', errors: { options: { nested: true } } }))
+
+    await submit()
+
+    expect(document.querySelector('[data-lau-status]').textContent).not.toContain('[object Object]')
+  })
+
+  // R-8: a hook that threw `undefined` still vetoed silently.
+  it('reports a hook that throws undefined', async () => {
+    const fetch = vi.fn()
+    const ui = mount(fetch)
+    ui.hooks.add('beforeRun', () => {
+      throw undefined
+    })
+
+    await submit()
+
+    expect(fetch).not.toHaveBeenCalled()
+    expect(document.querySelector('[data-lau-status]').dataset.tone).toBe('error')
+  })
 })

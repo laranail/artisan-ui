@@ -83,7 +83,8 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
         input?.setAttribute('aria-invalid', 'true')
         first ??= input
       } else {
-        unplaced.push(Array.isArray(list) ? list.join(' ') : String(list))
+        const text = Array.isArray(list) ? list.filter((item) => typeof item === 'string').join(' ') : list
+        if (typeof text === 'string' && text !== '') unplaced.push(text)
       }
     }
 
@@ -131,7 +132,7 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
 
       // A hook that threw is not a deliberate veto: say something went wrong rather than
       // leaving the operator with a button that did nothing.
-      if (outcome.vetoed && outcome.error !== undefined) {
+      if (outcome.vetoed && outcome.threw) {
         fail(outcome.error)
         return
       }

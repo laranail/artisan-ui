@@ -33,7 +33,7 @@ export class HookRegistry {
   }
 
   /**
-   * @returns {Promise<{ vetoed: boolean, payload: any, error?: unknown }>}
+   * @returns {Promise<{ vetoed: boolean, payload: any, error?: unknown, threw?: boolean }>}
    */
   async run(name, payload) {
     let current = payload
@@ -44,7 +44,7 @@ export class HookRegistry {
       try {
         result = await hook(current)
       } catch (error) {
-        return { vetoed: true, payload: current, error }
+        return { vetoed: true, payload: current, error, threw: true }
       }
 
       if (result === false) {
