@@ -67,8 +67,10 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
     }
   }
 
+  // Returns the messages that have no field to sit beside, for the status line.
   const showErrors = (errors) => {
     let first = null
+    const unplaced = []
 
     for (const [key, list] of Object.entries(errors ?? {})) {
       const target = form.querySelector(`[data-lau-error-for="${CSS.escape(key)}"]`)
@@ -80,12 +82,16 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
         const input = target.id ? form.querySelector(`[aria-describedby~="${CSS.escape(target.id)}"]`) : null
         input?.setAttribute('aria-invalid', 'true')
         first ??= input
+      } else {
+        unplaced.push(Array.isArray(list) ? list.join(' ') : String(list))
       }
     }
 
     // A field inside a collapsed panel cannot take focus or be seen: open its panel first.
     first?.closest('details')?.setAttribute('open', '')
     first?.focus()
+
+    return unplaced
   }
 
   const showResult = (body) => {
@@ -122,6 +128,13 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
 
       const outcome = await hooks.run('beforeRun', { command: form.dataset.command, body: serializeForm(form) })
       const payload = outcome.payload
+
+      // A hook that threw is not a deliberate veto: say something went wrong rather than
+      // leaving the operator with a button that did nothing.
+      if (outcome.vetoed && outcome.error !== undefined) {
+        fail(outcome.error)
+        return
+      }
 
       if (outcome.vetoed || !emit(form, 'run:before', payload, { cancelable: true })) {
         return
@@ -165,10 +178,11 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
         emit(form, body.success ? 'run:finished' : 'run:failed', body)
         notifier.notify(body.success ? 'success' : 'error', 'run', body)
         return
-      case 422:
-        showErrors(body?.errors)
-        say(body?.message ?? messages.invalid_input, 'error')
+      case 422: {
+        const unplaced = showErrors(body?.errors)
+        say([body?.message ?? messages.invalid_input, ...unplaced].join(' '), 'error')
         break
+      }
       case 423:
         say(messages.password_required, 'warning')
         askForPassword()

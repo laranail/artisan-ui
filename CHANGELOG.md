@@ -49,6 +49,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A `beforeRun` hook that throws now shows "Something went wrong" and reaches the notifier, instead
+  of silently doing nothing; a hook returning `false` is still a quiet veto. A `422` error with no
+  field to sit beside (an `arguments` or `options` error) is shown in the status line rather than
+  dropped.
+
 - With the `database` audit driver and no run table, a run's start is logged once, not twice: the
   finish used to log the start again although it had already fallen back to the log.
 - `docs/tools/execution.md` no longer says the previous time limit is "restored": PHP restarts the

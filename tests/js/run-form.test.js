@@ -193,4 +193,29 @@ describe('run form, errors in collapsed panels', () => {
     expect(status.textContent).toContain(text)
     expect(status.dataset.tone).toBe('error')
   })
+
+  // AUI-20: a beforeRun hook that throws vetoed the run with no word to the operator.
+  it('says so when a beforeRun hook throws, and sends nothing', async () => {
+    const fetch = vi.fn()
+    const ui = mount(fetch)
+    ui.hooks.add('beforeRun', () => {
+      throw new Error('hook broke')
+    })
+
+    await submit()
+
+    expect(fetch).not.toHaveBeenCalled()
+    expect(document.querySelector('[data-lau-status]').textContent).toContain('Something went wrong')
+    expect(document.querySelector('[data-lau-status]').dataset.tone).toBe('error')
+  })
+
+  // AUI-21: a 422 error with no field to sit beside (an `arguments` or `options` error, or an
+  // unknown name) was dropped, leaving only "Check the highlighted fields." with nothing highlighted.
+  it('shows a 422 error that has no field in the status line', async () => {
+    mount(async () => response(422, { message: 'Check', errors: { options: ['Unknown option [--nope].'] } }))
+
+    await submit()
+
+    expect(document.querySelector('[data-lau-status]').textContent).toContain('Unknown option [--nope].')
+  })
 })
