@@ -378,8 +378,10 @@ const DEFAULT_MESSAGES = {
   unexpected: 'Something went wrong. Try again.',
   unauthenticated: 'Sign in to use this page.',
   throttled: 'Too many runs. Wait a moment and try again.',
-  gateway: 'The server stopped waiting for a reply. The command may still be running: check History before you run it again.',
-  network: 'The request did not reach the server, or its reply was lost. Check History before you run the command again.',
+  gateway:
+    'The server stopped waiting for a reply. The command may still be running: check History before you run it again.',
+  network:
+    'The request did not reach the server, or its reply was lost. Check History before you run the command again.',
 }
 
 function readMessages(document) {
