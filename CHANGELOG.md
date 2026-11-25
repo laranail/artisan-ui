@@ -64,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   credential left behind, so secret scanning has nothing to report. A second test there keeps
   every generated credential's purpose a single plain word, because secret scanning reads a
   compound purpose as the password itself. The `laranail/package-tools` floor is now `^0.1.10`,
-  the first release shipping that check.
+  the first release shipping that check. It is now `^0.1.13`, the first release shipping `AssertsNoFacadeCalls`, which `tests/Arch/NoFacadeCallsTest.php` uses.
 
 - The Caches quick-action group gains `clear-compiled`, and a new Tidy group pre-fills tidy's
   regenerable actions (`cache`, `logs --days=7`, `temp`), each with a dry-run twin and none for

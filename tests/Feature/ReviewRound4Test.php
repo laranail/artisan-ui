@@ -37,6 +37,13 @@ use Simtabi\Laranail\ArtisanUI\Core\Discovery\ArgumentDefinition;
  * Regressions from the 2026-11-25 audit (design folder run-2026-11-25/FINDINGS.md).
  */
 
+// Several tests here delete files under storage/logs, laravel.log included. On Windows a file with a
+// pending delete cannot be reopened, so the next log write throws; log to the null channel unless a
+// test sets its own (the tidy test files do the same).
+beforeEach(function (): void {
+    config()->set('logging.default', 'null');
+});
+
 afterEach(function (): void {
     tidyCleanUp();
 });
