@@ -54,6 +54,9 @@ Without `--force`, each action asks first. In a non-interactive run (CI, a pipe,
 - **Every deletion is confined to `storage_path()`.** Each root is realpath-resolved and proven to sit inside `realpath(storage_path())`; each candidate file is realpath-resolved and re-checked against its root, so a `..` path or a symlink pointing outside storage is skipped, never followed. Root paths are also screened for `..` segments and null bytes.
 - **`--dry-run` deletes nothing.** It lists each candidate and reports the space that would be freed. On `db` it is a no-op.
 - **`db` is hard-gated.** It needs `--force`, passes Laravel's `confirmToProceed()`, and is excluded from `all`, so a bulk tidy can never drop your tables.
+- **A filter must filter something.** `--days` and `--size` take a whole number of at least 1.
+  `0` means no filter, so `tidy storage --days=0` is refused like an unscoped sweep, and a value that
+  is not a whole number (`abc`, `-5`, `1.5`) is rejected before anything runs.
 - **`--force` is not the gate for user files.** It is in every CI invocation, so it is typed by habit; a `--days` or `--size` scope, or the single-purpose `--unfiltered`, is.
 - **The sweep is signal-safe.** The loop checks between roots and between files, so `SIGTERM` or `SIGINT` stops it cleanly mid-directory. Without `ext-pcntl` the check always passes and a normal run is unaffected. Every run logs a completion summary with files processed, space freed and execution time.
 

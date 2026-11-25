@@ -116,6 +116,15 @@ final class TidyCommand extends Command
             'dry_run' => $this->isDryRun(),
         ]);
 
+        $invalid = $this->invalidFilter();
+
+        if ($invalid !== null) {
+            $this->consoleWriter()->error($invalid);
+            $this->logSummary(self::FAILURE);
+
+            return self::FAILURE;
+        }
+
         $result = match ($action) {
             'cache'                   => $this->tidyCache(),
             'logs', 'temp', 'storage' => $this->tidyFiles($action),
@@ -433,26 +442,57 @@ final class TidyCommand extends Command
     // filters / helpers
     // -----------------------------------------------------------------------
 
-    private function ageCutoff(): ?int
+    /**
+     * The value of a numeric filter option, or null when it filters nothing.
+     *
+     * Zero filters nothing: `--days=0` matches every file older than now, and
+     * `--size=0` every file of at least 0 MB. Both used to count as a filter,
+     * which let `tidy storage --days=0 --force` past the user-file gate and the
+     * production refusal (AUI-01). A zero is therefore no filter at all, so the
+     * gate sees the sweep for what it is. A value that is not a whole number is
+     * rejected up front by {@see invalidFilter()} and never reaches here.
+     */
+    private function filterValue(string $option): ?int
     {
-        $days = $this->option('days');
+        $value = $this->option($option);
 
-        if (! is_string($days) || trim($days) === '') {
+        if (! is_string($value) || trim($value) === '' || preg_match('/^\d+$/', trim($value)) !== 1) {
             return null;
         }
 
-        return time() - (max(0, (int) $days) * 86400);
+        $number = (int) trim($value);
+
+        return $number > 0 ? $number : null;
+    }
+
+    /**
+     * An error message when `--days` or `--size` is not a whole number, else null.
+     */
+    private function invalidFilter(): ?string
+    {
+        foreach (['days', 'size'] as $option) {
+            $value = $this->option($option);
+
+            if (is_string($value) && trim($value) !== '' && preg_match('/^\d+$/', trim($value)) !== 1) {
+                return "--{$option} must be a whole number of " . ($option === 'days' ? 'days' : 'MB') . ", got [{$value}].";
+            }
+        }
+
+        return null;
+    }
+
+    private function ageCutoff(): ?int
+    {
+        $days = $this->filterValue('days');
+
+        return $days === null ? null : time() - ($days * 86400);
     }
 
     private function minBytes(): ?int
     {
-        $size = $this->option('size');
+        $size = $this->filterValue('size');
 
-        if (! is_string($size) || trim($size) === '') {
-            return null;
-        }
-
-        return max(0, (int) $size) * 1024 * 1024;
+        return $size === null ? null : $size * 1024 * 1024;
     }
 
     private function isDryRun(): bool

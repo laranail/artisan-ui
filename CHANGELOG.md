@@ -42,6 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `tidy storage --days=0 --force` (or `--size=0`, or a non-numeric `--days`) no longer deletes
+  every upload. A zero filter counted as a scope, which got it past both the user-file gate and the
+  production refusal. A zero is now no filter, so the gate refuses the sweep, and a value that is not
+  a whole number is rejected with exit code 1 before anything runs.
+
 - **Windows CI installs the current PHP patch.** setup-php reused the PHP the Windows image
   ships (8.5.11) after 8.5.12 fixed a security issue, so `roave/security-advisories` refused
   to install and the Windows leg failed on every pull request. The cross-platform job now
