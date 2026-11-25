@@ -100,6 +100,8 @@ The application's scheduler still has to be running. To schedule it yourself, se
 
 The home screen links to it only when both conditions hold.
 
+A failed run's exception message (scrubbed, at most 2,000 characters) is server detail, hosts and paths included, so History shows it only to holders of the `view-environment` ability; everyone else sees the run id to quote, as the live run response does.
+
 ## Rerun
 
 Each history entry has a **Rerun** link to the command's form, pre-filled with the recorded arguments and options. It never runs anything by itself.

@@ -6,6 +6,9 @@
     /** @var list<\Simtabi\Laranail\ArtisanUI\Enums\RunStatus> $statuses */
 @endphp
 
+@php
+    $showErrors = \Illuminate\Support\Facades\Gate::allows(\Simtabi\Laranail\ArtisanUI\Enums\Ability::ViewEnvironment->value);
+@endphp
 @section('title', __('laranail/artisan-ui::messages.history'))
 
 @section('content')
@@ -56,8 +59,12 @@
                                 {{-- Outside <summary>: a link nested in a disclosure button is unreachable for many assistive tools. --}}
                                 <a href="{{ route('laranail-artisan-ui.detail', ['command' => $run->command, 'rerun' => $run->id]) }}" class="text-xs underline">{{ __('laranail/artisan-ui::messages.history_rerun') }}: {{ $run->command }}</a>
                             </div>
-                            @if ($run->error)
+                            {{-- The exception text is server detail (hosts, paths, drivers): it takes the
+                                 environment ability, as the live response shows only the run id. --}}
+                            @if ($run->error && $showErrors)
                                 <p class="text-red-700 dark:text-red-400">{{ $run->error }}</p>
+                            @elseif ($run->error)
+                                <p class="text-red-700 dark:text-red-400">{{ __('laranail/artisan-ui::messages.run_errored', ['run' => $run->id]) }}</p>
                             @endif
                             @if ($run->output !== null && $run->output !== '')
                                 <pre class="lau-output max-h-96 overflow-auto rounded bg-zinc-900 p-3 font-mono leading-relaxed text-zinc-100">@foreach ($ansi->segments($run->output) as $segment)<span class="{{ $segment['classes'] }}">{{ $segment['text'] }}</span>@endforeach</pre>

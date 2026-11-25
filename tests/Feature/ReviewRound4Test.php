@@ -466,3 +466,24 @@ it('fills a recorded flag back in when rerunning by id', function (): void {
 
     expect($html)->toMatch('/name="options\[shout\]"[^>]*checked/');
 });
+
+// AUI-11: History showed each failed run's exception message to every view-history holder, while
+// the live response deliberately shows only a run id. The message is server detail, so it now takes
+// the view-environment ability; others see the run id.
+it('shows a failed run\'s error in history only to those who may view the environment', function (bool $allowed): void {
+    allowEverything();
+    Illuminate\Support\Facades\Gate::define(Simtabi\Laranail\ArtisanUI\Enums\Ability::ViewEnvironment->value, static fn (): bool => $allowed);
+    $this->actingAs($this->makeUser());
+    config()->set('laranail.artisan-ui.audit.driver', 'database');
+    (require dirname(__DIR__, 2) . '/database/migrations/create_laranail_artisan_ui_runs_table.php.stub')->up();
+
+    Simtabi\Laranail\ArtisanUI\Core\Audit\CommandRun::query()->create([
+        'id' => '01ERRORRUN0000000000000000', 'command' => 'lau-fixture:echo', 'arguments' => [], 'options' => [],
+        'risk' => 'safe', 'status' => 'errored', 'error' => 'SQLSTATE: connection to db-internal-7 refused', 'started_at' => now(),
+    ]);
+
+    $html = (string) $this->get(route('laranail-artisan-ui.history'))->assertOk()->getContent();
+
+    expect(str_contains($html, 'db-internal-7'))->toBe($allowed)
+        ->and($html)->toContain('01ERRORRUN0000000000000000');
+})->with(['with view-environment' => true, 'without it' => false]);

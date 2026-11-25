@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- History shows a failed run's exception message only to holders of `view-environment`, the ability
+  that already guards server details; other `view-history` holders see the run id, as the live run
+  response does.
+
 - History's **Rerun** link carries the run id (`?rerun=<id>`) instead of the recorded input, which
   reached access logs and browser history in the query string. The form is filled on the server, for
   those with `view-history`, from the recorded (already redacted) input. Query-string prefill links
