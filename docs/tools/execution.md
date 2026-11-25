@@ -72,6 +72,8 @@ $exitCode = $artisan->call($command->name, [...$input->toParameters(), '--no-int
 | `limits.time_limit` | `120` | seconds per run |
 | `limits.lock_seconds` | `300` | seconds a lock lives before it is considered abandoned |
 
+**Match the proxy's timeout to `time_limit`.** A run is one synchronous request, so a proxy or load balancer that gives up first (nginx's `proxy_read_timeout` and `fastcgi_read_timeout` default to 60 seconds) answers `504` while the command carries on. The form then says the command may still be running and points at History rather than inviting a second run, but the operator still loses the output. Set the proxy's read timeout above `limits.time_limit` for the panel's path.
+
 ## Locks
 
 One cache lock per command, named `laranail-artisan-ui:run:<command>`, so two operators cannot run `migrate` at once. Every destructive command shares the single lock `laranail-artisan-ui:run:*destructive*`, so `migrate:fresh` cannot interleave with `db:wipe`. A held lock answers `409` with "[migrate] is already running. Wait for it to finish and try again."

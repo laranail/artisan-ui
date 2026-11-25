@@ -49,6 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The run form names what happened on a `502`, `503` or `504` (the proxy stopped waiting; the
+  command may still be running, so check History before running it again), a lost connection, a
+  `429` and a `401`, where it used to say "Something went wrong. Try again.", which invited a second
+  run of a command still in progress. `docs/tools/execution.md` explains matching the proxy's read
+  timeout to `limits.time_limit`.
+
 - `tidy logs` and `tidy all` no longer delete the file the panel's audit trail is written to (the
   `log` driver's channel, which the `database` driver also falls back to), so a panel user can no
   longer erase the record of who ran what with one click. The summary says how many files it kept.

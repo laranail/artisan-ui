@@ -171,4 +171,26 @@ describe('run form, errors in collapsed panels', () => {
     expect(document.querySelector('details').open).toBe(true)
     expect(document.activeElement.id).toBe('o-step')
   })
+
+  // AUI-09: a run that outlasts the proxy keeps running on the server, so "Something went wrong.
+  // Try again." invited a second run of, say, a migration. Each status says what it means.
+  it.each([
+    [502, 'may still be running'],
+    [503, 'may still be running'],
+    [504, 'may still be running'],
+    [0, 'did not reach the server'],
+    [429, 'Too many runs'],
+    [401, 'Sign in'],
+  ])('says what a %i means instead of the generic error', async (code, text) => {
+    mount(async () => {
+      if (code === 0) throw new TypeError('Failed to fetch')
+      return response(code, null)
+    })
+
+    await submit()
+
+    const status = document.querySelector('[data-lau-status]')
+    expect(status.textContent).toContain(text)
+    expect(status.dataset.tone).toBe('error')
+  })
 })

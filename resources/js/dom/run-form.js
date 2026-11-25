@@ -12,6 +12,10 @@ import { listen } from './listen.js'
  *   419  the session expired: refresh the token and ask the operator to run again;
  *        never replayed automatically, because a run is not idempotent
  *   409  the command is already running
+ *   401  signed out: sign in again
+ *   429  too many runs: wait
+ *   502 / 503 / 504, and 0 (no response): the command may still be running, so the operator
+ *        is pointed at History rather than invited to run it again
  *   403 / 404 / other: a generic message, since the server says no more
  *
  * Lifecycle events (bubbling, on the form): run:before (cancelable), run:finished,
@@ -186,6 +190,21 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
       case 404:
         say(messages.not_found, 'error')
         break
+      case 401:
+        say(messages.unauthenticated, 'error')
+        break
+      case 429:
+        say(messages.throttled, 'error')
+        break
+      case 502:
+      case 503:
+      case 504:
+        // The proxy gave up waiting, not the command: it can still be running on the server.
+        say(messages.gateway, 'error')
+        break
+      case 0:
+        say(messages.network, 'error')
+        break
       default:
         say(messages.unexpected, 'error')
     }
@@ -343,6 +362,10 @@ const DEFAULT_MESSAGES = {
   forbidden: 'You are not allowed to run this command.',
   not_found: 'That command is not available here.',
   unexpected: 'Something went wrong. Try again.',
+  unauthenticated: 'Sign in to use this page.',
+  throttled: 'Too many runs. Wait a moment and try again.',
+  gateway: 'The server stopped waiting for a reply. The command may still be running: check History before you run it again.',
+  network: 'The request did not reach the server, or its reply was lost. Check History before you run the command again.',
 }
 
 function readMessages(document) {

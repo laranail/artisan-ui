@@ -128,6 +128,10 @@
             'session_lost'    => __('laranail/artisan-ui::messages.session_lost'),
             'password_required' => __('laranail/artisan-ui::messages.password_required'),
             'cancelled'       => __('laranail/artisan-ui::messages.cancelled'),
+            'unauthenticated' => __('laranail/artisan-ui::messages.unauthenticated'),
+            'throttled'       => __('laranail/artisan-ui::messages.throttled'),
+            'gateway'         => __('laranail/artisan-ui::messages.gateway'),
+            'network'         => __('laranail/artisan-ui::messages.network'),
         ];
     @endphp
     <script type="application/json" data-lau-messages>{!! json_encode($clientMessages, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) !!}</script>
