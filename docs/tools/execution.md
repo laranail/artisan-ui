@@ -46,7 +46,7 @@ $exitCode = $artisan->call($command->name, [...$input->toParameters(), '--no-int
 - **Always `--no-interaction`.** A command that prompts would otherwise block on STDIN, hanging the worker or failing under a web server. With it, a prompt answers its default, and commands that ask for confirmation in production refuse unless `--force` is given, which is the right outcome for a web panel.
 - **By name, through the kernel.** A fresh input every time; no state carries over from a previous run of the same command.
 - **Bounded output.** Output goes to a `CappedOutput` buffer that stops accepting text past `limits.max_output_bytes`, cutting on a character boundary and flagging the result truncated. ANSI colour is kept for the formatter.
-- **Bounded time.** `set_time_limit(limits.time_limit)` for the run; the previous limit is restored afterwards.
+- **Bounded time.** `set_time_limit(limits.time_limit)` for the run, then `set_time_limit()` with the previous value. PHP restarts the timer on every call, so the rest of the request gets the previous limit afresh, not what was left of it; a request that runs a command can therefore take up to `time_limit` plus the usual limit in all.
 - **Never throws.** An exception becomes a result with status `errored`, no exit code, whatever output was written before it, and the exception attached.
 
 ## `RunResult` and statuses
@@ -72,11 +72,19 @@ $exitCode = $artisan->call($command->name, [...$input->toParameters(), '--no-int
 | `limits.time_limit` | `120` | seconds per run |
 | `limits.lock_seconds` | `300` | seconds a lock lives before it is considered abandoned |
 
+**Match the proxy's timeout to `time_limit`.** A run is one synchronous request, so a proxy or load balancer that gives up first (nginx's `proxy_read_timeout` and `fastcgi_read_timeout` default to 60 seconds) answers `504` while the command carries on. The form then says the command may still be running and points at History rather than inviting a second run, but the operator still loses the output. Set the proxy's read timeout above `limits.time_limit` for the panel's path.
+
 ## Locks
 
 One cache lock per command, named `laranail-artisan-ui:run:<command>`, so two operators cannot run `migrate` at once. Every destructive command shares the single lock `laranail-artisan-ui:run:*destructive*`, so `migrate:fresh` cannot interleave with `db:wipe`. A held lock answers `409` with "[migrate] is already running. Wait for it to finish and try again."
 
 A cache store that does not implement `LockProvider` runs the command unlocked and logs `tolerated anomaly [laranail/artisan-ui:run.lock]` at warning; doctor's "Run locks" check warns.
+
+**Keep the locks apart from the cache data.** `cache:clear` and `optimize:clear` are Safe and flush the default store (tidy's `cache`, `temp` and `all` actions do too, but tidy is destructive, so it takes the shared destructive lock and waits its turn, a `--dry-run` preview included). A store whose locks live in its data loses them too, so clearing the cache while `migrate:fresh` runs lets a second destructive command start alongside it. Give the store a separate lock store, which Laravel supports on each driver: `lock_connection` on `redis` (separate by default), `lock_table` on `database` (`cache_locks` by default), `lock_path` on `file`. Doctor's "Run locks" check warns until it is. The per-user rate limiter is cache data either way, so a flush resets it.
+
+`cache:clear --locks` flushes the lock store itself, separate or not, so that one run is classified **destructive** (`RiskClassifier::DESTRUCTIVE_FLAGS`): it asks for the typed name and a password like any other destructive command.
+
+A lock that cannot be released (its table dropped by `db:wipe` or `migrate:fresh`, say) is logged at warning and left to expire after `limits.lock_seconds`; the run's response is not affected.
 
 ## The `CommandRunner` seam
 

@@ -27,12 +27,21 @@ use Simtabi\Laranail\Package\Tools\Support\Resilience\FailurePolicy;
  * `laranail::package-tools.doctor` show the audit store as degraded instead of it failing
  * quietly.
  */
-final readonly class DatabaseRecorder implements RunRecorder
+final class DatabaseRecorder implements RunRecorder
 {
+    /**
+     * Runs whose start went to the log instead of the table, so the finish does not log the
+     * start a second time (AUI-19). Lives as long as the recorder, which is bound per resolve,
+     * never as a singleton, so it holds the runs of one execution at most.
+     *
+     * @var array<string, true>
+     */
+    private array $startLogged = [];
+
     public function __construct(
-        private LogRecorder $fallback,
-        private SecretRedactor $redactor,
-        private ArtisanUIConfig $config,
+        private readonly LogRecorder $fallback,
+        private readonly SecretRedactor $redactor,
+        private readonly ArtisanUIConfig $config,
     ) {}
 
     public function started(RunContext $context): void
@@ -53,6 +62,7 @@ final readonly class DatabaseRecorder implements RunRecorder
         } catch (Throwable $e) {
             FailurePolicy::handle($e, 'laranail/artisan-ui:audit.database', BootCriticality::Degradable);
             $this->fallback->started($context);
+            $this->startLogged[$context->runId] = true;
         }
     }
 
@@ -84,8 +94,15 @@ final readonly class DatabaseRecorder implements RunRecorder
                 'actual'   => 'no row to complete',
                 'decision' => 'recorded to the log channel instead',
             ]);
-            $this->fallback->started($context);
+            // The start is logged here only when it went to the table: the log then has no record
+            // of it. When it already fell back, logging it again made one run read as two.
+            if (! isset($this->startLogged[$context->runId])) {
+                $this->fallback->started($context);
+            }
+
             $this->fallback->finished($context, $result, $output);
         }
+
+        unset($this->startLogged[$context->runId]);
     }
 }

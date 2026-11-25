@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  # Weekly on main, so a tool or dependency release that breaks the check shows up here rather
+  # than on an unrelated pull request.
+  schedule:
+    - cron: '35 6 * * 1'
 
 concurrency:
   group: static-analysis-${{ github.ref }}

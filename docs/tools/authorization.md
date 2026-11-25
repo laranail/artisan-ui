@@ -9,7 +9,7 @@ Four Gate abilities, the cases of `Simtabi\Laranail\ArtisanUI\Enums\Ability`, de
 | `Ability::Access` | `laranail-artisan-ui.access` | the user | on every panel request, by `EnsureArtisanUIAccess` |
 | `Ability::Run` | `laranail-artisan-ui.run` | the user, the `CommandDefinition`, the validated input array | on every run, after validation and before any confirmation |
 | `Ability::ViewHistory` | `laranail-artisan-ui.view-history` | the user | on the History screen (and to show its link) |
-| `Ability::ViewEnvironment` | `laranail-artisan-ui.view-environment` | the user | to show the environment panel on the home screen |
+| `Ability::ViewEnvironment` | `laranail-artisan-ui.view-environment` | the user | to show the environment panel on the home screen, the environment name in the header, and a failed run's error text in History |
 
 `Ability::Run->value` and the string `'laranail-artisan-ui.run'` are the same thing; use whichever reads better.
 

@@ -171,4 +171,74 @@ describe('run form, errors in collapsed panels', () => {
     expect(document.querySelector('details').open).toBe(true)
     expect(document.activeElement.id).toBe('o-step')
   })
+
+  // AUI-09: a run that outlasts the proxy keeps running on the server, so "Something went wrong.
+  // Try again." invited a second run of, say, a migration. Each status says what it means.
+  it.each([
+    [502, 'may still be running'],
+    [503, 'may still be running'],
+    [504, 'may still be running'],
+    [0, 'did not reach the server'],
+    [429, 'Too many runs'],
+    [401, 'Sign in'],
+  ])('says what a %i means instead of the generic error', async (code, text) => {
+    mount(async () => {
+      if (code === 0) throw new TypeError('Failed to fetch')
+      return response(code, null)
+    })
+
+    await submit()
+
+    const status = document.querySelector('[data-lau-status]')
+    expect(status.textContent).toContain(text)
+    expect(status.dataset.tone).toBe('error')
+  })
+
+  // AUI-20: a beforeRun hook that throws vetoed the run with no word to the operator.
+  it('says so when a beforeRun hook throws, and sends nothing', async () => {
+    const fetch = vi.fn()
+    const ui = mount(fetch)
+    ui.hooks.add('beforeRun', () => {
+      throw new Error('hook broke')
+    })
+
+    await submit()
+
+    expect(fetch).not.toHaveBeenCalled()
+    expect(document.querySelector('[data-lau-status]').textContent).toContain('Something went wrong')
+    expect(document.querySelector('[data-lau-status]').dataset.tone).toBe('error')
+  })
+
+  // AUI-21: a 422 error with no field to sit beside (an `arguments` or `options` error, or an
+  // unknown name) was dropped, leaving only "Check the highlighted fields." with nothing highlighted.
+  it('shows a 422 error that has no field in the status line', async () => {
+    mount(async () => response(422, { message: 'Check', errors: { options: ['Unknown option [--nope].'] } }))
+
+    await submit()
+
+    expect(document.querySelector('[data-lau-status]').textContent).toContain('Unknown option [--nope].')
+  })
+
+  // R-7: an error entry that is neither text nor a list printed "[object Object]".
+  it('leaves out a 422 error entry that is not text', async () => {
+    mount(async () => response(422, { message: 'Check', errors: { options: { nested: true } } }))
+
+    await submit()
+
+    expect(document.querySelector('[data-lau-status]').textContent).not.toContain('[object Object]')
+  })
+
+  // R-8: a hook that threw `undefined` still vetoed silently.
+  it('reports a hook that throws undefined', async () => {
+    const fetch = vi.fn()
+    const ui = mount(fetch)
+    ui.hooks.add('beforeRun', () => {
+      throw undefined
+    })
+
+    await submit()
+
+    expect(fetch).not.toHaveBeenCalled()
+    expect(document.querySelector('[data-lau-status]').dataset.tone).toBe('error')
+  })
 })

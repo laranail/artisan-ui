@@ -7,6 +7,7 @@ namespace Simtabi\Laranail\ArtisanUI\Core\Policy;
 use Simtabi\Laranail\ArtisanUI\Enums\CommandRisk;
 use Simtabi\Laranail\ArtisanUI\Core\Support\CommandPattern;
 use Simtabi\Laranail\ArtisanUI\Core\Support\ArtisanUIConfig;
+use Simtabi\Laranail\ArtisanUI\Core\Validation\ValidatedInput;
 
 /**
  * Classifies a command by name into a CommandRisk.
@@ -96,6 +97,25 @@ final readonly class RiskClassifier
         // `db` action runs `migrate:fresh`; one name covers every action, so the class is
         // set by the worst of them, as `migrate:*` is.
         'laranail::artisan-ui.tidy',
+        // `--prune` deletes every migration file once the schema is dumped.
+        'schema:dump',
+        // Installers publish and overwrite files, run migrations and edit configuration. The
+        // colon form is the common one (`filament:install`); the dotted form is this family's
+        // (`laranail::artisan-ui.install`). `install:*` (the framework's own) stays writes-files.
+        '*:install',
+        '*.install',
+        // Debug and search data: each deletes stored entries or whole indexes.
+        'telescope:clear',
+        'telescope:prune',
+        'pulse:clear',
+        'pulse:purge',
+        'scout:flush',
+        'scout:delete-index',
+        'scout:delete-all-indexes',
+        // With --force, replaces the OAuth keys and invalidates every issued token.
+        'passport:keys',
+        // Runs the application's test suite, which can refresh the configured database.
+        'test',
     ];
 
     /**
@@ -112,9 +132,60 @@ final readonly class RiskClassifier
         'ide-helper:*',
     ];
 
+    /**
+     * Commands with a flag that makes a run change nothing, so a run with it set is Safe.
+     *
+     * Only this package's own command: tidy's dry run is tested here to delete nothing. Another
+     * command's `--dry-run` is that command's promise, which the panel cannot check, so it is not
+     * trusted. Classification by name ({@see classify()}) is unchanged; this is what a single run
+     * takes (AUI-26).
+     */
+    public const array PREVIEW_FLAGS = [
+        'laranail::artisan-ui.tidy' => 'dry-run',
+    ];
+
+    /**
+     * Safe commands with a flag that makes a run destructive. `cache:clear --locks` flushes the
+     * lock store itself, whether or not it is kept apart from the cache data, so a Safe user
+     * could drop a running destructive command's lock.
+     */
+    public const array DESTRUCTIVE_FLAGS = [
+        'cache:clear' => 'locks',
+    ];
+
     public function __construct(
         private ArtisanUIConfig $config,
     ) {}
+
+    /**
+     * The class one run of a command takes: its class by name, lowered to Safe when it is a
+     * destructive command run with its preview flag set.
+     */
+    public function classifyRun(string $command, ValidatedInput $input): CommandRisk
+    {
+        $risk = $this->classify($command);
+        $flag = self::PREVIEW_FLAGS[$command] ?? null;
+
+        if ($risk === CommandRisk::Destructive && $flag !== null && ($input->options[$flag] ?? null) === true) {
+            return CommandRisk::Safe;
+        }
+
+        $raising = self::DESTRUCTIVE_FLAGS[$command] ?? null;
+
+        if ($risk === CommandRisk::Safe && $raising !== null && ($input->options[$raising] ?? null) === true) {
+            return CommandRisk::Destructive;
+        }
+
+        return $risk;
+    }
+
+    /**
+     * The flag that makes a run of this command a preview, if it has one.
+     */
+    public function previewFlag(string $command): ?string
+    {
+        return self::PREVIEW_FLAGS[$command] ?? null;
+    }
 
     public function classify(string $command): CommandRisk
     {

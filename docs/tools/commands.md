@@ -53,11 +53,12 @@ The command exits non-zero when any check fails (or warns, with `--strict`). The
 | Environments | `production` and `*` are not in `environments` | **fails** |
 | Enabled | the panel is enabled (reports the path) | skipped while disabled; warns when enabled in `production` |
 | Gate abilities | the application defined `access` and `run` | warns "Nobody can use the panel yet" and lists the undefined ones |
-| Auth guard | the guard exists and uses the `session` driver | fails for an unknown guard, warns for another driver |
+| Auth guard | the guard exists, uses the `session` driver and has a user provider | fails for an unknown guard; warns for another driver, or a guard with no user provider (destructive commands then cannot be confirmed) |
 | Maintenance mode | the panel path is exempt from maintenance mode | warns that `down` would lock the panel out |
 | Audit trail | the driver is `log`, or `database` with its table present | warns for `none`; fails when the table is missing |
 | Audit pruning | `model:prune` is scheduled for the run table | warns; skipped for other drivers |
-| Run locks | the cache store is reachable and supports locks | fails when unreachable (rate limiting and locks would 500 every run); warns when it cannot lock |
+| CSRF protection | the panel middleware, or a group it names, includes the framework's CSRF middleware | **fails**: another site could submit the run form in a signed-in browser |
+| Run locks | the cache store is reachable, supports locks and keeps them apart from its data | fails when unreachable (rate limiting and locks would 500 every run); warns when it cannot lock, or when `cache:clear` would flush its locks (see [execution](execution.md#locks)) |
 | Assets | the bundle is built (and, in `published` mode, published and current) | fails when unbuilt; warns when the published copy is stale |
 | Octane | Octane is not installed | warns that commands share the worker's state |
 
@@ -74,7 +75,8 @@ Example, with the panel enabled and no abilities defined yet (messages shortened
 | ! | Maintenance mode | Running `down` from the panel will lock the panel out too...  |
 | ✓ | Audit trail      | Runs are logged to the default channel.                       |
 | · | Audit pruning    | Only applies to the database audit driver.                    |
-| ✓ | Run locks        | The cache store is reachable and supports locks.              |
+| ✓ | CSRF protection  | Tokens are verified by ...\PreventRequestForgery.            |
+| ✓ | Run locks        | The cache store is reachable, supports locks and keeps them...|
 | ✓ | Assets           | Built, and served in route mode.                              |
 | · | Octane           | Octane is not installed.                                      |
 +---+------------------+---------------------------------------------------------------+

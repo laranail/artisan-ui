@@ -15,6 +15,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 # Calls the one shared definition in laranail/.github, which owns the PHP
 # matrix (8.4 / 8.5), the composer cache and its laranail eviction,
 # prefer-lowest and the timeouts.
@@ -64,8 +67,12 @@ jobs:
           # 8.5.12, 2026-10-26). Linux installs fresh, so it is left alone.
           update: ${{ runner.os != 'Linux' }}
 
+      # The laranail siblings resolve through git, so composer enumerates their refs through the
+      # GitHub API; unauthenticated, that shares one low rate limit across the matrix.
       - name: Install dependencies
         run: composer update --prefer-stable --no-interaction --no-progress
+        env:
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.GITHUB_TOKEN }}"}}'
 
       - name: Run Pest
         run: vendor/bin/pest

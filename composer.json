@@ -26,7 +26,7 @@
         },
         {
             "name": "Imani Manyara",
-            "email": "imani@simtabi.com",
+            "email": "opensource@simtabi.com",
             "role": "Maintainer"
         }
     ],
@@ -54,7 +54,7 @@
         "illuminate/view": "^13.0",
         "laranail/console": "^0.1",
         "laranail/enumerator": "^0.1",
-        "laranail/package-tools": "^0.1.10",
+        "laranail/package-tools": "^0.1.13",
         "laravel/framework": "^13.0"
     },
     "require-dev": {

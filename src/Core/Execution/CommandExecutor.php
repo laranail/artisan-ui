@@ -158,7 +158,7 @@ final readonly class CommandExecutor
                 $guard();
             }
 
-            $lock?->release();
+            $this->release($lock, $command->name);
         }
     }
 
@@ -184,6 +184,25 @@ final readonly class CommandExecutor
             } catch (Throwable) {
                 // The lock expires on its own; see lockSeconds().
             }
+        }
+    }
+
+    /**
+     * Release the run's lock without letting a failure turn a recorded run into a 500. The
+     * lock can be gone with its table: `db:wipe` or `migrate:fresh` on the database cache
+     * store drops `cache_locks`. It expires on its own; see lockSeconds().
+     */
+    private function release(?Lock $lock, string $command): void
+    {
+        try {
+            $lock?->release();
+        } catch (Throwable $e) {
+            FailurePolicy::warn('laranail/artisan-ui:run.lock', [
+                'command'  => $command,
+                'expected' => 'the run lock to release',
+                'actual'   => $e::class . ': ' . $this->redactor->scrub($e->getMessage()),
+                'decision' => 'left to expire',
+            ]);
         }
     }
 

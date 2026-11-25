@@ -39,14 +39,16 @@ return [
     ],
     'confirm_label'    => 'Type :command to confirm',
     'confirm_mismatch' => 'Type ":command" exactly to confirm.',
+    'confirm_preview'  => 'Not needed with :flag: a preview changes nothing, so it runs without confirming.',
 
-    'password_title'     => 'Confirm your password',
-    'password_help'      => 'Destructive commands need a recent password confirmation.',
-    'password_label'     => 'Password',
-    'password_submit'    => 'Confirm and run',
-    'password_cancel'    => 'Cancel',
-    'password_required'  => 'Confirm your password to run this command.',
-    'password_incorrect' => 'That password is not correct.',
+    'password_title'       => 'Confirm your password',
+    'password_help'        => 'Destructive commands need a recent password confirmation.',
+    'password_label'       => 'Password',
+    'password_submit'      => 'Confirm and run',
+    'password_cancel'      => 'Cancel',
+    'password_required'    => 'Confirm your password to run this command.',
+    'password_incorrect'   => 'That password is not correct.',
+    'password_unavailable' => 'Your sign-in guard cannot check a password, so destructive commands are unavailable. Run `php artisan laranail::artisan-ui.doctor`.',
 
     'invalid_input'           => 'Check the highlighted fields.',
     'busy'                    => '[:command] is already running. Wait for it to finish and try again.',
@@ -59,6 +61,9 @@ return [
     'session_expired_pending' => 'Your session expired. Refreshing it...',
     'session_lost'            => 'Your session expired and could not be refreshed. Reload the page.',
     'cancelled'               => 'Cancelled. Nothing was run.',
+    'throttled'               => 'Too many runs. Wait a moment and try again.',
+    'gateway'                 => 'The server stopped waiting for a reply. The command may still be running: check History before you run it again.',
+    'network'                 => 'The request did not reach the server, or its reply was lost. Check History before you run the command again.',
     'skip_to_content'         => 'Skip to content',
     'not_set'                 => 'Not set',
     'send_without_value'      => 'Send :option without a value',
@@ -76,6 +81,7 @@ return [
     'history_status'  => 'Status',
     'history_user'    => 'User',
     'history_nobody'  => 'unknown user',
+    'history_mine'    => 'Only my runs',
 
     // Field errors from Core\Validation\InputValidator.
     'validation' => [

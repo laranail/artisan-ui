@@ -185,3 +185,54 @@ it('refuses a dry run too rather than previewing the lot', function (): void {
 
     expect($upload)->toBeFile();
 });
+
+/*
+ * AUI-01: a filter that filters nothing is no filter. `--days=0`, `--size=0`
+ * and a non-numeric value all used to count as "scoped", which let
+ * `tidy storage --days=0 --force` past both the gate and the production
+ * refusal and delete every upload.
+ */
+it('treats a zero filter as no filter at the gate', function (string $option): void {
+    $upload = tidyUpload();
+
+    $this->artisan('laranail::artisan-ui.tidy', ['action' => 'storage', $option => '0', '--force' => true])
+        ->expectsOutputToContain('Refusing to sweep')
+        ->assertExitCode(1);
+
+    expect($upload)->toBeFile();
+})->with(['--days', '--size']);
+
+it('refuses a zero filter in production as well', function (string $option): void {
+    $this->originalEnv = tidyPretendProduction();
+    $upload = tidyUpload();
+
+    $this->artisan('laranail::artisan-ui.tidy', ['action' => 'storage', $option => '0', '--force' => true])
+        ->expectsOutputToContain('in production')
+        ->assertExitCode(1);
+
+    expect($upload)->toBeFile();
+})->with(['--days', '--size']);
+
+it('rejects a filter that is not a whole number', function (string $option, string $value): void {
+    $upload = tidyUpload();
+
+    $this->artisan('laranail::artisan-ui.tidy', ['action' => 'storage', $option => $value, '--force' => true])
+        ->expectsOutputToContain('must be a whole number')
+        ->assertExitCode(1);
+
+    expect($upload)->toBeFile();
+})->with([
+    ['--days', 'abc'],
+    ['--days', '-5'],
+    ['--days', '1.5'],
+    ['--size', 'big'],
+]);
+
+it('still lets a zero filter clear regenerable logs', function (): void {
+    $log = tidyStorageFile('logs/zero-days.log', 'noise');
+
+    $this->artisan('laranail::artisan-ui.tidy', ['action' => 'logs', '--days' => '0', '--force' => true])
+        ->assertExitCode(0);
+
+    expect($log)->not->toBeFile();
+});

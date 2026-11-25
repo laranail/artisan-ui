@@ -9,8 +9,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+# Read-only at the top; the release job alone may write.
 permissions:
-  contents: write
+  contents: read
 
 # The laranail siblings resolve through git rather than Packagist, so every job
 # hits the GitHub API to enumerate their refs. Unauthenticated that shares one
@@ -25,6 +26,8 @@ jobs:
     name: Publish the GitHub release
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v7

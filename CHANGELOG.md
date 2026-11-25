@@ -9,8 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- History has an **Only my runs** filter (`?mine=1`), and names each run's user by type as well as
+  id, since an id alone is ambiguous across user models. The default is still every run.
+
 - `laranail::artisan-ui.tidy`, moved from `laranail/toolkit` (`laranail::toolkit.tidy`, removed
-  there in 0.3.0). Path-confined maintenance: `cache`, `logs`, `temp`, `storage`, `db` and `all`,
+  there in laranail/toolkit#43, which its current `v0.1.0` includes). Path-confined maintenance: `cache`, `logs`, `temp`, `storage`, `db` and `all`,
   with `--days`, `--size`, `--seed`, `--optimize`, `--dry-run`, `--unfiltered` and `--force`.
   Behaviour is unchanged: every deletion stays inside `storage_path()`, an unscoped sweep of user
   uploads is refused (outright in production), and `db` runs `migrate:fresh` only with `--force`
@@ -20,13 +23,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Behaviour change:** `cache:clear --locks` is classified destructive for that run, so the panel asks
+  for the typed name and a password: it flushes the lock store itself, which let a Safe user drop a
+  running destructive command's lock. `cache:clear` without it stays safe.
+
+- Package classes take the framework's contracts instead of `config()` and the `Date` facade
+  (`SecurityHeaders`, `CsrfTokenController`, `DestructiveConfirmation`), and
+  `tests/Arch/NoFacadeCallsTest.php` keeps it that way with package-tools' `assertNoFacadeCallsIn()`
+  and a floor of 75 files. The run model's two `app()` calls are marked exempt: Eloquent builds
+  models without the container. No behaviour changes.
+
+- **Behaviour change:** a `tidy` run with `--dry-run` no longer asks for the typed name and a password,
+  because it deletes nothing; tidy's Preview quick actions now run in one click. Every other tidy run
+  still confirms, and no other command's `--dry-run` is trusted. `RiskClassifier::classifyRun()` is the
+  new per-run classification; `classify()` is unchanged.
+
+- History shows a failed run's exception message only to holders of `view-environment`, the ability
+  that already guards server details; other `view-history` holders see the run id, as the live run
+  response does.
+
+- History's **Rerun** link carries the run id (`?rerun=<id>`) instead of the recorded input, which
+  reached access logs and browser history in the query string. The form is filled on the server, for
+  those with `view-history`, from the recorded (already redacted) input. Query-string prefill links
+  still work.
+
+- Quick-action group labels, descriptions and action labels, and the environment panel's row labels,
+  render through `__()` keyed by their English text, so an application can translate them in its own
+  `lang/<locale>.json`. Untranslated, they render as before.
+
+- **Behaviour change:** more commands are classified destructive, so the panel now asks for the
+  typed name and a password before running them: `schema:dump` (whose `--prune` deletes every
+  migration file), installers (`*:install`, `*.install`, this package's own included),
+  `telescope:clear`/`prune`, `pulse:clear`/`purge`, `scout:flush`/`delete-index`/`delete-all-indexes`,
+  `passport:keys` and `test`. Until now they fell through to the Safe default. An application that
+  wants one back as safe lists it under `risk.safe`.
+
 - `LICENSE` is the plain MIT text with every copyright line, so GitHub and Packagist detect it as MIT; the attribution prose moved to `attribution.md`.
 - Test credentials are generated at run time with `TestCredentials` instead of being written into
   the tests, and `tests/Arch/NoLiteralCredentialsTest.php` fails the suite on any literal
   credential left behind, so secret scanning has nothing to report. A second test there keeps
   every generated credential's purpose a single plain word, because secret scanning reads a
   compound purpose as the password itself. The `laranail/package-tools` floor is now `^0.1.10`,
-  the first release shipping that check.
+  the first release shipping that check. It is now `^0.1.13`, the first release shipping `AssertsNoFacadeCalls`, which `tests/Arch/NoFacadeCallsTest.php` uses.
 
 - The Caches quick-action group gains `clear-compiled`, and a new Tidy group pre-fills tidy's
   regenerable actions (`cache`, `logs --days=7`, `temp`), each with a dry-run twin and none for
@@ -41,6 +79,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   facade or global helper that `require` does not name.
 
 ### Fixed
+
+- Command links show a visible focus ring (the old near-white background on white was about 1.04:1),
+  risk badges carry their help as screen-reader text as well as a tooltip, and the greyed-out quick
+  action and the error-page status code meet contrast. The header shows the environment name only to
+  those with the `view-environment` ability, as the environment panel does. The environment panel no
+  longer opens a database connection to read the server version; it names the driver, and the
+  version only when the connection is already open.
+
+- A `beforeRun` hook that throws now shows "Something went wrong" and reaches the notifier, instead
+  of silently doing nothing; a hook returning `false` is still a quiet veto. A `422` error with no
+  field to sit beside (an `arguments` or `options` error) is shown in the status line rather than
+  dropped.
+
+- With the `database` audit driver and no run table, a run's start is logged once, not twice: the
+  finish used to log the start again although it had already fallen back to the log.
+- `docs/tools/execution.md` no longer says the previous time limit is "restored": PHP restarts the
+  timer, so the rest of the request gets the previous limit afresh.
+
+- A wrong password before a destructive command is now logged and dispatches `AccessDenied` with the
+  reason `password`, like every other denial; it was throttled but left no trace. A guard with no user
+  provider gets a clear refusal instead of a fatal 500, and doctor's "Auth guard" check warns about it.
+- The asset route answers a bare `404` outside `environments` and `allowed_ips`, as the panel's other
+  routes give nothing away there; it used to serve the bundle to anyone, which confirmed the panel existed.
+- Doctor gains a "CSRF protection" check that fails when `laranail.artisan-ui.middleware` (or the
+  groups it names) has no CSRF middleware. The config comment no longer implies the package adds it.
+
+- The run form names what happened on a `502`, `503` or `504` (the proxy stopped waiting; the
+  command may still be running, so check History before running it again), a lost connection, a
+  `429` and a `401`, where it used to say "Something went wrong. Try again.", which invited a second
+  run of a command still in progress. `docs/tools/execution.md` explains matching the proxy's read
+  timeout to `limits.time_limit`.
+
+- `tidy logs` and `tidy all` no longer delete the file the panel's audit trail is written to (the
+  `log` driver's channel, which the `database` driver also falls back to), so a panel user can no
+  longer erase the record of who ran what with one click. The summary says how many files it kept.
+- Doctor's "Run locks" check now warns when the cache store keeps its locks in the data that
+  `cache:clear`, `optimize:clear` and tidy flush, which let a Safe command drop a running
+  destructive command's lock. The fix is the store's own `lock_connection`, `lock_table` or
+  `lock_path`; see `docs/tools/execution.md`.
+
+- A finished run no longer stays in memory for the life of a long-lived worker. Its shutdown guard
+  kept its callback, and with it the executor, the run's unredacted input and its lock, because PHP
+  holds every registered shutdown function until the process exits. The guard now drops the
+  callback once it is disarmed or has run.
+- A run whose lock cannot be released (`db:wipe` or `migrate:fresh` on the database cache store
+  drops `cache_locks`) is no longer answered with a 500 after it succeeded and was recorded. The
+  failure is logged at warning and the lock left to expire.
+- `tidy` now fails, with exit code 1 and the nested command named, when a command it runs fails:
+  `migrate:fresh`, `db:seed`, `cache:clear` or `optimize:clear`. Their exit codes were ignored, so a
+  failed `migrate:fresh` printed "Database refreshed." and the panel recorded the run as succeeded.
+- A command that has already run in a long-lived worker no longer lists the application's own
+  `command` argument. Discovery reads each command's native definition, not the one Symfony merges
+  the application definition into after a run.
+
+- `tidy storage --days=0 --force` (or `--size=0`, or a non-numeric `--days`) no longer deletes
+  every upload. A zero filter counted as a scope, which got it past both the user-file gate and the
+  production refusal. A zero is now no filter, so the gate refuses the sweep, and a value that is not
+  a whole number is rejected with exit code 1 before anything runs.
 
 - **Windows CI installs the current PHP patch.** setup-php reused the PHP the Windows image
   ships (8.5.11) after 8.5.12 fixed a security issue, so `roave/security-advisories` refused

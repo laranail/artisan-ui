@@ -12,6 +12,10 @@ import { listen } from './listen.js'
  *   419  the session expired: refresh the token and ask the operator to run again;
  *        never replayed automatically, because a run is not idempotent
  *   409  the command is already running
+ *   401  signed out: sign in again
+ *   429  too many runs: wait
+ *   502 / 503 / 504, and 0 (no response): the command may still be running, so the operator
+ *        is pointed at History rather than invited to run it again
  *   403 / 404 / other: a generic message, since the server says no more
  *
  * Lifecycle events (bubbling, on the form): run:before (cancelable), run:finished,
@@ -63,8 +67,10 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
     }
   }
 
+  // Returns the messages that have no field to sit beside, for the status line.
   const showErrors = (errors) => {
     let first = null
+    const unplaced = []
 
     for (const [key, list] of Object.entries(errors ?? {})) {
       const target = form.querySelector(`[data-lau-error-for="${CSS.escape(key)}"]`)
@@ -76,12 +82,17 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
         const input = target.id ? form.querySelector(`[aria-describedby~="${CSS.escape(target.id)}"]`) : null
         input?.setAttribute('aria-invalid', 'true')
         first ??= input
+      } else {
+        const text = Array.isArray(list) ? list.filter((item) => typeof item === 'string').join(' ') : list
+        if (typeof text === 'string' && text !== '') unplaced.push(text)
       }
     }
 
     // A field inside a collapsed panel cannot take focus or be seen: open its panel first.
     first?.closest('details')?.setAttribute('open', '')
     first?.focus()
+
+    return unplaced
   }
 
   const showResult = (body) => {
@@ -118,6 +129,13 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
 
       const outcome = await hooks.run('beforeRun', { command: form.dataset.command, body: serializeForm(form) })
       const payload = outcome.payload
+
+      // A hook that threw is not a deliberate veto: say something went wrong rather than
+      // leaving the operator with a button that did nothing.
+      if (outcome.vetoed && outcome.threw) {
+        fail(outcome.error)
+        return
+      }
 
       if (outcome.vetoed || !emit(form, 'run:before', payload, { cancelable: true })) {
         return
@@ -161,10 +179,11 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
         emit(form, body.success ? 'run:finished' : 'run:failed', body)
         notifier.notify(body.success ? 'success' : 'error', 'run', body)
         return
-      case 422:
-        showErrors(body?.errors)
-        say(body?.message ?? messages.invalid_input, 'error')
+      case 422: {
+        const unplaced = showErrors(body?.errors)
+        say([body?.message ?? messages.invalid_input, ...unplaced].join(' '), 'error')
         break
+      }
       case 423:
         say(messages.password_required, 'warning')
         askForPassword()
@@ -185,6 +204,21 @@ export function mountRunForm(form, { document, client, hooks, notifier, csrfUrl 
         break
       case 404:
         say(messages.not_found, 'error')
+        break
+      case 401:
+        say(messages.unauthenticated, 'error')
+        break
+      case 429:
+        say(messages.throttled, 'error')
+        break
+      case 502:
+      case 503:
+      case 504:
+        // The proxy gave up waiting, not the command: it can still be running on the server.
+        say(messages.gateway, 'error')
+        break
+      case 0:
+        say(messages.network, 'error')
         break
       default:
         say(messages.unexpected, 'error')
@@ -343,6 +377,12 @@ const DEFAULT_MESSAGES = {
   forbidden: 'You are not allowed to run this command.',
   not_found: 'That command is not available here.',
   unexpected: 'Something went wrong. Try again.',
+  unauthenticated: 'Sign in to use this page.',
+  throttled: 'Too many runs. Wait a moment and try again.',
+  gateway:
+    'The server stopped waiting for a reply. The command may still be running: check History before you run it again.',
+  network:
+    'The request did not reach the server, or its reply was lost. Check History before you run the command again.',
 }
 
 function readMessages(document) {

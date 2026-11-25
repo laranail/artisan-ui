@@ -27,6 +27,8 @@ Two lines on `audit.channel` (or the default channel):
 
 Output is not logged, only its size. If the log channel itself fails, the write falls back to PHP's `error_log()`.
 
+`laranail::artisan-ui.tidy logs` (and its "Delete old logs" quick action) leaves the audit channel's file alone, so the panel cannot be used to erase its own record. Anything else that rotates or deletes logs, a host's logrotate included, still can: give `audit.channel` its own file with the retention you need.
+
 ## The database driver
 
 Publish and run the migration (the install command offers to):
@@ -98,9 +100,15 @@ The application's scheduler still has to be running. To schedule it yourself, se
 
 The home screen links to it only when both conditions hold.
 
+History lists every recorded run to whoever has `view-history`, newest first, and names each run's user by type and id. **Only my runs** narrows it to the viewer's own (`?mine=1`), alongside the command and status filters. To keep some operators from seeing others' runs at all, give them no `view-history` ability; it is not checked per run.
+
+A failed run's exception message (scrubbed, at most 2,000 characters) is server detail, hosts and paths included, so History shows it only to holders of the `view-environment` ability; everyone else sees the run id to quote, as the live run response does.
+
 ## Rerun
 
 Each history entry has a **Rerun** link to the command's form, pre-filled with the recorded arguments and options. It never runs anything by itself.
+
+The link carries only the run id (`?rerun=<id>`); the form is filled on the server from the recorded input, which is already redacted, so the input never reaches access logs or browser history. It fills the form only for someone with the `view-history` ability, and only for the command that run was of; anything else falls back to the query-string prefill (`?arguments[...]=…&options[...]=…`), which still works for links built by hand.
 
 Recorded input is redacted, so a masked secret must be typed again: any pre-fill value equal to `redaction.mask` is dropped rather than put in the form, where submitting it would send the mask as the value. Pre-filling also keeps only keys the command still defines.
 

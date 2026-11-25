@@ -6,6 +6,7 @@ namespace Simtabi\Laranail\ArtisanUI\Modules\WebUI\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Contracts\Config\Repository as Config;
 use Simtabi\Laranail\Package\Tools\Http\Controllers\WebController;
 
 /**
@@ -16,9 +17,9 @@ use Simtabi\Laranail\Package\Tools\Http\Controllers\WebController;
  */
 final class CsrfTokenController extends WebController
 {
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(Request $request, Config $config): JsonResponse
     {
-        $lifetime = config('session.lifetime', 120);
+        $lifetime = $config->get('session.lifetime', 120);
 
         return new JsonResponse([
             'token'      => $request->session()->token(),

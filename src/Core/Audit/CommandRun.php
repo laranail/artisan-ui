@@ -57,6 +57,7 @@ final class CommandRun extends Model
 
     public function getConnectionName(): ?string
     {
+        // @facade-call-exempt: Eloquent builds models without the container, so there is no constructor to inject into.
         return app(ArtisanUIConfig::class)->auditConnection() ?? parent::getConnectionName();
     }
 
@@ -68,6 +69,7 @@ final class CommandRun extends Model
         return self::query()->where(
             'created_at',
             '<',
+            // @facade-call-exempt: Eloquent builds models without the container, so there is no constructor to inject into.
             Carbon::now()->subDays(app(ArtisanUIConfig::class)->retentionDays()),
         );
     }

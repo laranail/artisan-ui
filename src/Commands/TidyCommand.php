@@ -11,8 +11,11 @@ use Psr\Log\LoggerInterface;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use Illuminate\Console\ConfirmableTrait;
+use Simtabi\Laranail\ArtisanUI\Enums\AuditDriver;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Simtabi\Laranail\Console\Tools\Commands\Command;
+use Simtabi\Laranail\ArtisanUI\Core\Support\ArtisanUIConfig;
+use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Simtabi\Laranail\ArtisanUI\Commands\Concerns\FilePathGuard;
 use Simtabi\Laranail\Console\Tools\Commands\Concerns\SupportsNamespacedNames;
 
@@ -40,7 +43,7 @@ use Simtabi\Laranail\Console\Tools\Commands\Concerns\SupportsNamespacedNames;
  * containment; they are also where user uploads live.
  *
  * Moved from `laranail/toolkit`, where it was `laranail::toolkit.tidy`
- * (`Simtabi\Laranail\Toolkit\Commands\Tidy`); toolkit removes it in 0.3.0.
+ * (`Simtabi\Laranail\Toolkit\Commands\Tidy`); toolkit removed it in laranail/toolkit#43.
  * The behaviour is unchanged. Only the collaborators were substituted:
  * toolkit's cache and logger contracts became the framework's cache
  * `Repository` and PSR-3 `LoggerInterface`, and its file service's
@@ -94,6 +97,11 @@ final class TidyCommand extends Command
 
     private int $spaceFreed = 0;
 
+    private int $auditLogsKept = 0;
+
+    /** @var list<array{dir: string, name: string, ext: string}>|null */
+    private ?array $auditLogTargets = null;
+
     public function __construct(
         private readonly Cache $cache,
         private readonly LoggerInterface $log,
@@ -115,6 +123,15 @@ final class TidyCommand extends Command
             'action'  => $action,
             'dry_run' => $this->isDryRun(),
         ]);
+
+        $invalid = $this->invalidFilter();
+
+        if ($invalid !== null) {
+            $this->consoleWriter()->error($invalid);
+            $this->logSummary(self::FAILURE);
+
+            return self::FAILURE;
+        }
 
         $result = match ($action) {
             'cache'                   => $this->tidyCache(),
@@ -171,13 +188,15 @@ final class TidyCommand extends Command
         try {
             // Flush via the framework's own command so every store/driver is
             // honoured; the injected cache repo is exercised above for DI parity.
-            $this->call('cache:clear');
+            if (! $this->callSucceeded('cache:clear')) {
+                return self::FAILURE;
+            }
         } catch (Throwable $e) {
             $this->log->error('Cache flush failed during tidy', ['error' => $e->getMessage()]);
         }
 
-        if ($this->boolOption('optimize')) {
-            $this->call('optimize:clear');
+        if ($this->boolOption('optimize') && ! $this->callSucceeded('optimize:clear')) {
+            return self::FAILURE;
         }
 
         $writer->success('Cache tidied.');
@@ -193,6 +212,7 @@ final class TidyCommand extends Command
     {
         $this->filesProcessed = 0;
         $this->spaceFreed = 0;
+        $this->auditLogsKept = 0;
 
         $base = realpath(storage_path());
 
@@ -223,6 +243,10 @@ final class TidyCommand extends Command
             }
 
             $this->sweep($base, $relative);
+        }
+
+        if ($this->auditLogsKept > 0) {
+            $this->consoleWriter()->line(sprintf('Kept %d audit log file(s): the panel records its runs there.', $this->auditLogsKept));
         }
 
         $verb = $this->isDryRun() ? 'Would free' : 'Freed';
@@ -285,6 +309,12 @@ final class TidyCommand extends Command
             }
 
             if (str_ends_with($file->getFilename(), '.gitignore')) {
+                continue;
+            }
+
+            if ($this->isAuditLogFile($real)) {
+                $this->auditLogsKept++;
+
                 continue;
             }
 
@@ -357,10 +387,12 @@ final class TidyCommand extends Command
             return self::FAILURE;
         }
 
-        $this->call('migrate:fresh', ['--force' => true]);
+        if (! $this->callSucceeded('migrate:fresh', ['--force' => true])) {
+            return self::FAILURE;
+        }
 
-        if ($this->boolOption('seed')) {
-            $this->call('db:seed', ['--force' => true]);
+        if ($this->boolOption('seed') && ! $this->callSucceeded('db:seed', ['--force' => true])) {
+            return self::FAILURE;
         }
 
         $writer->success('Database refreshed.');
@@ -433,26 +465,57 @@ final class TidyCommand extends Command
     // filters / helpers
     // -----------------------------------------------------------------------
 
-    private function ageCutoff(): ?int
+    /**
+     * The value of a numeric filter option, or null when it filters nothing.
+     *
+     * Zero filters nothing: `--days=0` matches every file older than now, and
+     * `--size=0` every file of at least 0 MB. Both used to count as a filter,
+     * which let `tidy storage --days=0 --force` past the user-file gate and the
+     * production refusal (AUI-01). A zero is therefore no filter at all, so the
+     * gate sees the sweep for what it is. A value that is not a whole number is
+     * rejected up front by {@see invalidFilter()} and never reaches here.
+     */
+    private function filterValue(string $option): ?int
     {
-        $days = $this->option('days');
+        $value = $this->option($option);
 
-        if (! is_string($days) || trim($days) === '') {
+        if (! is_string($value) || trim($value) === '' || preg_match('/^\d+$/', trim($value)) !== 1) {
             return null;
         }
 
-        return time() - (max(0, (int) $days) * 86400);
+        $number = (int) trim($value);
+
+        return $number > 0 ? $number : null;
+    }
+
+    /**
+     * An error message when `--days` or `--size` is not a whole number, else null.
+     */
+    private function invalidFilter(): ?string
+    {
+        foreach (['days', 'size'] as $option) {
+            $value = $this->option($option);
+
+            if (is_string($value) && trim($value) !== '' && preg_match('/^\d+$/', trim($value)) !== 1) {
+                return "--{$option} must be a whole number of " . ($option === 'days' ? 'days' : 'MB') . ", got [{$value}].";
+            }
+        }
+
+        return null;
+    }
+
+    private function ageCutoff(): ?int
+    {
+        $days = $this->filterValue('days');
+
+        return $days === null ? null : time() - ($days * 86400);
     }
 
     private function minBytes(): ?int
     {
-        $size = $this->option('size');
+        $size = $this->filterValue('size');
 
-        if (! is_string($size) || trim($size) === '') {
-            return null;
-        }
-
-        return max(0, (int) $size) * 1024 * 1024;
+        return $size === null ? null : $size * 1024 * 1024;
     }
 
     private function isDryRun(): bool
@@ -506,6 +569,119 @@ final class TidyCommand extends Command
             $writer->error("Refusing to sweep {$roots} with no filter — these hold user files, and every one would match.");
             $writer->line('  Pass <fg=yellow>--days=30</> or <fg=yellow>--size=100</> to scope it,');
             $writer->line('  or <fg=yellow>--unfiltered</> to delete all of it anyway (never in production).');
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether a file is one the panel's audit trail is written to (AUI-07).
+     *
+     * The `log` audit driver writes to a log channel, the default one unless configured, and the
+     * `database` driver falls back to it when its table is gone. That channel is usually a file
+     * under storage/logs, so `tidy logs` (and the "Delete old logs" quick action) erased the record
+     * of who ran what. The files are kept: a `single` channel's path, a `daily` channel's
+     * `name-YYYY-MM-DD.ext` rotations, and either behind a `stack`.
+     */
+    private function isAuditLogFile(string $real): bool
+    {
+        $this->auditLogTargets ??= $this->resolveAuditLogTargets();
+
+        foreach ($this->auditLogTargets as $target) {
+            if (dirname($real) !== $target['dir']) {
+                continue;
+            }
+
+            $basename = basename($real);
+            $suffix = $target['ext'] === '' ? '' : '.' . $target['ext'];
+
+            if ($basename === $target['name'] . $suffix
+                || preg_match('/^' . preg_quote($target['name'], '/') . '-\d{4}-\d{2}-\d{2}' . preg_quote($suffix, '/') . '$/', $basename) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<array{dir: string, name: string, ext: string}>
+     */
+    private function resolveAuditLogTargets(): array
+    {
+        $config = $this->getLaravel()->make(ConfigRepository::class);
+        // The recorder's own accessors, so tidy protects exactly the channel runs are written to:
+        // an empty channel means the default one, and the driver may be an enum case.
+        $artisanUi = $this->getLaravel()->make(ArtisanUIConfig::class);
+
+        if ($artisanUi->auditDriver() === AuditDriver::None) {
+            return [];
+        }
+
+        $channel = $artisanUi->auditChannel() ?? $config->get('logging.default');
+        $targets = [];
+        $pending = is_string($channel) ? [$channel] : [];
+        $seen = [];
+
+        while ($pending !== []) {
+            $name = array_shift($pending);
+
+            if (isset($seen[$name])) {
+                continue;
+            }
+
+            $seen[$name] = true;
+            $settings = $config->get("logging.channels.{$name}");
+
+            if (! is_array($settings)) {
+                continue;
+            }
+
+            if (($settings['driver'] ?? null) === 'stack') {
+                foreach ((array) ($settings['channels'] ?? []) as $child) {
+                    if (is_string($child)) {
+                        $pending[] = $child;
+                    }
+                }
+
+                continue;
+            }
+
+            $path = $settings['path'] ?? null;
+
+            if (! is_string($path) || $path === '') {
+                continue;
+            }
+
+            $dir = realpath(dirname($path));
+
+            if ($dir !== false) {
+                $targets[] = [
+                    'dir'  => $dir,
+                    'name' => pathinfo($path, PATHINFO_FILENAME),
+                    'ext'  => pathinfo($path, PATHINFO_EXTENSION),
+                ];
+            }
+        }
+
+        return $targets;
+    }
+
+    /**
+     * Run a nested command and report whether it exited 0. Its exit code used to be ignored,
+     * so a migrate:fresh that failed still printed "Database refreshed." and returned success,
+     * and the panel recorded the run as succeeded (AUI-08).
+     *
+     * @param array<string, mixed> $arguments
+     */
+    private function callSucceeded(string $command, array $arguments = []): bool
+    {
+        $code = $this->call($command, $arguments);
+
+        if ($code !== self::SUCCESS) {
+            $this->consoleWriter()->error("{$command} failed (exit code {$code}); stopping.");
 
             return false;
         }

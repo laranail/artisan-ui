@@ -77,6 +77,9 @@
                 <label for="lau-confirm" class="block text-sm font-medium">{{ __('laranail/artisan-ui::messages.confirm_label', ['command' => $command->name]) }}</label>
                 <input id="lau-confirm" type="text" name="confirm" autocomplete="off" spellcheck="false" aria-describedby="lau-confirm-error" class="w-full rounded-md border border-red-300 bg-white px-3 py-1.5 font-mono text-sm dark:border-red-800 dark:bg-zinc-900">
                 <p id="lau-confirm-error" data-lau-error-for="confirm" class="text-xs text-red-600 dark:text-red-400" hidden></p>
+                @if ($previewFlag = app(\Simtabi\Laranail\ArtisanUI\Core\Policy\RiskClassifier::class)->previewFlag($command->name))
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('laranail/artisan-ui::messages.confirm_preview', ['flag' => '--' . $previewFlag]) }}</p>
+                @endif
             </div>
         @endif
 
@@ -128,6 +131,10 @@
             'session_lost'    => __('laranail/artisan-ui::messages.session_lost'),
             'password_required' => __('laranail/artisan-ui::messages.password_required'),
             'cancelled'       => __('laranail/artisan-ui::messages.cancelled'),
+            'unauthenticated' => __('laranail/artisan-ui::messages.unauthenticated'),
+            'throttled'       => __('laranail/artisan-ui::messages.throttled'),
+            'gateway'         => __('laranail/artisan-ui::messages.gateway'),
+            'network'         => __('laranail/artisan-ui::messages.network'),
         ];
     @endphp
     <script type="application/json" data-lau-messages>{!! json_encode($clientMessages, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) !!}</script>

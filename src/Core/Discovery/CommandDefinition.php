@@ -51,7 +51,10 @@ final readonly class CommandDefinition
 
     public static function fromCommand(Command $command): self
     {
-        $definition = $command->getDefinition();
+        // The native definition, not getDefinition(): once a command has run, Symfony merges the
+        // application definition into it, which adds the application's own `command` argument.
+        // In a worker whose kernel outlives the request, the listing then asked for it (AUI-10).
+        $definition = $command->getNativeDefinition();
 
         $options = [];
 

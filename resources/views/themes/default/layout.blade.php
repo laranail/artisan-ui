@@ -4,6 +4,8 @@
     // Decided here rather than passed by each page, so every page shows the same navigation.
     $showHistoryLink = app(\Simtabi\Laranail\ArtisanUI\Core\Support\ArtisanUIConfig::class)->auditDriver() === \Simtabi\Laranail\ArtisanUI\Enums\AuditDriver::Database
         && \Illuminate\Support\Facades\Gate::allows(\Simtabi\Laranail\ArtisanUI\Enums\Ability::ViewHistory->value);
+    // The environment name is what the environment panel shows, so it takes the same ability.
+    $showEnvironment = \Illuminate\Support\Facades\Gate::allows(\Simtabi\Laranail\ArtisanUI\Enums\Ability::ViewEnvironment->value);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
@@ -35,7 +37,9 @@
                 @endif
             </nav>
             <div class="ml-auto flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
-                <span class="hidden sm:inline">{{ app()->environment() }}</span>
+                @if ($showEnvironment)
+                    <span class="hidden sm:inline" data-lau-header-environment>{{ app()->environment() }}</span>
+                @endif
                 <button type="button" data-lau-theme-toggle class="rounded border border-zinc-300 px-2 py-1 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800" aria-pressed="false">
                     <span class="sr-only">{{ __('laranail/artisan-ui::messages.theme_toggle') }}</span>
                     <span aria-hidden="true">◐</span>

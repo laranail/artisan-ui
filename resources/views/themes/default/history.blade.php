@@ -4,8 +4,12 @@
     /** @var \Illuminate\Pagination\LengthAwarePaginator<int, \Simtabi\Laranail\ArtisanUI\Core\Audit\CommandRun> $runs */
     /** @var \Simtabi\Laranail\ArtisanUI\Core\Output\AnsiFormatter $ansi */
     /** @var list<\Simtabi\Laranail\ArtisanUI\Enums\RunStatus> $statuses */
+    /** @var bool $mine */
 @endphp
 
+@php
+    $showErrors = \Illuminate\Support\Facades\Gate::allows(\Simtabi\Laranail\ArtisanUI\Enums\Ability::ViewEnvironment->value);
+@endphp
 @section('title', __('laranail/artisan-ui::messages.history'))
 
 @section('content')
@@ -25,6 +29,10 @@
                 @endforeach
             </select>
         </div>
+        <label class="flex items-center gap-2 py-1.5 text-sm">
+            <input type="checkbox" name="mine" value="1" @checked($mine) class="rounded border-zinc-300 dark:border-zinc-700">
+            {{ __('laranail/artisan-ui::messages.history_mine') }}
+        </label>
         <button type="submit" class="rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700">{{ __('laranail/artisan-ui::messages.history_filter') }}</button>
     </form>
 
@@ -44,7 +52,7 @@
                                 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' => $run->status === \Simtabi\Laranail\ArtisanUI\Enums\RunStatus::Errored,
                                 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' => $run->status === \Simtabi\Laranail\ArtisanUI\Enums\RunStatus::Running,
                             ])>{{ $run->status->label() }}</span>
-                            <span class="text-zinc-500 dark:text-zinc-400"><span class="sr-only">{{ __('laranail/artisan-ui::messages.history_user') }}: </span>{{ $run->user_id ?? __('laranail/artisan-ui::messages.history_nobody') }}</span>
+                            <span class="text-zinc-500 dark:text-zinc-400"><span class="sr-only">{{ __('laranail/artisan-ui::messages.history_user') }}: </span>@if ($run->user_id !== null && $run->user_type !== null){{ class_basename($run->user_type) }} @endif{{ $run->user_id ?? __('laranail/artisan-ui::messages.history_nobody') }}</span>
                             <time class="text-zinc-500 dark:text-zinc-400" datetime="{{ $run->created_at?->toIso8601String() }}">{{ $run->created_at?->diffForHumans() }}</time>
                             @if ($run->duration_ms !== null)
                                 <span class="text-zinc-500 dark:text-zinc-400">{{ __('laranail/artisan-ui::messages.duration', ['ms' => $run->duration_ms]) }}</span>
@@ -54,10 +62,14 @@
                             <div class="flex flex-wrap items-center justify-between gap-2">
                                 <p class="font-mono text-zinc-500 dark:text-zinc-400">{{ __('laranail/artisan-ui::messages.run_id', ['run' => $run->id]) }}</p>
                                 {{-- Outside <summary>: a link nested in a disclosure button is unreachable for many assistive tools. --}}
-                                <a href="{{ route('laranail-artisan-ui.detail', ['command' => $run->command, 'arguments' => $run->arguments ?? [], 'options' => array_map(static fn ($v) => $v ?? '', $run->options ?? [])]) }}" class="text-xs underline">{{ __('laranail/artisan-ui::messages.history_rerun') }}: {{ $run->command }}</a>
+                                <a href="{{ route('laranail-artisan-ui.detail', ['command' => $run->command, 'rerun' => $run->id]) }}" class="text-xs underline">{{ __('laranail/artisan-ui::messages.history_rerun') }}: {{ $run->command }}</a>
                             </div>
-                            @if ($run->error)
+                            {{-- The exception text is server detail (hosts, paths, drivers): it takes the
+                                 environment ability, as the live response shows only the run id. --}}
+                            @if ($run->error && $showErrors)
                                 <p class="text-red-700 dark:text-red-400">{{ $run->error }}</p>
+                            @elseif ($run->error)
+                                <p class="text-red-700 dark:text-red-400">{{ __('laranail/artisan-ui::messages.run_errored', ['run' => $run->id]) }}</p>
                             @endif
                             @if ($run->output !== null && $run->output !== '')
                                 <pre class="lau-output max-h-96 overflow-auto rounded bg-zinc-900 p-3 font-mono leading-relaxed text-zinc-100">@foreach ($ansi->segments($run->output) as $segment)<span class="{{ $segment['classes'] }}">{{ $segment['text'] }}</span>@endforeach</pre>

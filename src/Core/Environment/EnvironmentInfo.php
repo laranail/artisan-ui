@@ -42,14 +42,24 @@ final readonly class EnvironmentInfo
         ];
     }
 
+    /**
+     * The default connection's driver, and its server version when the connection is already
+     * open. It used to open one to ask, on every page load, so a slow or unreachable database
+     * stalled the panel (AUI-34).
+     */
     private function database(): string
     {
-        try {
-            $connection = $this->db->connection();
+        $name = $this->string('database.default');
+        $driver = $this->string("database.connections.{$name}.driver");
 
-            return $connection->getDriverName() . ' ' . $connection->getServerVersion();
+        if (! array_key_exists($name, $this->db->getConnections())) {
+            return $driver;
+        }
+
+        try {
+            return $driver . ' ' . $this->db->connection($name)->getServerVersion();
         } catch (Throwable) {
-            return 'unavailable';
+            return $driver;
         }
     }
 

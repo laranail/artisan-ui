@@ -27,10 +27,59 @@ final class Prefill
      */
     public static function fromRequest(Request $request, CommandDefinition $command, string $mask = ''): array
     {
+        return self::fromInput([
+            'arguments' => $request->query('arguments'),
+            'options'   => $request->query('options'),
+        ], $command, $mask);
+    }
+
+    /**
+     * The form values for a run recorded in history: its arguments and options as stored (already
+     * redacted), read on the server, so a rerun link need carry only the run id (AUI-13).
+     *
+     * @param array<string, mixed>|null $arguments
+     * @param array<string, mixed>|null $options
+     *
+     * @return array<string, string|list<string>>
+     */
+    public static function fromRun(?array $arguments, ?array $options, CommandDefinition $command, string $mask = ''): array
+    {
+        return self::fromInput([
+            'arguments' => self::asQuery($arguments ?? []),
+            'options'   => self::asQuery($options ?? []),
+        ], $command, $mask);
+    }
+
+    /**
+     * Recorded values as a query string would carry them, so a rerun by id fills the form exactly
+     * as the old query-string link did: `true` is `'1'`, `false` is `'0'`, a number is its digits,
+     * and `null` stays a present, empty key.
+     *
+     * @param array<array-key, mixed> $values
+     *
+     * @return array<array-key, mixed>
+     */
+    private static function asQuery(array $values): array
+    {
+        return array_map(static fn (mixed $value): mixed => match (true) {
+            is_array($value)  => self::asQuery($value),
+            is_bool($value)   => $value ? '1' : '0',
+            is_scalar($value) => (string) $value,
+            default           => null,
+        }, $values);
+    }
+
+    /**
+     * @param array{arguments: mixed, options: mixed} $sections
+     *
+     * @return array<string, string|list<string>>
+     */
+    private static function fromInput(array $sections, CommandDefinition $command, string $mask): array
+    {
         $values = [];
 
         foreach (['arguments' => $command->arguments, 'options' => $command->options] as $section => $fields) {
-            $input = $request->query($section);
+            $input = $sections[$section];
 
             if (! is_array($input)) {
                 continue;
